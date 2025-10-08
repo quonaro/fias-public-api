@@ -4,137 +4,169 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PyPI](https://img.shields.io/badge/PyPI-Not%20Published-red.svg)](https://pypi.org/project/fias-public-api/)
 
-> 🚀 **Простой и удобный Python клиент для работы с публичным API ФИАС (Федеральная информационная адресная система) России**
+> 🚀 **Simple and convenient Python client for working with the Russian FIAS (Federal Information Address System) Public API**
 
-## ✨ Возможности
+## ✨ Features
 
-| Функция               | Описание                                              | Статус |
-| --------------------- | ----------------------------------------------------- | ------ |
-| 🔍 **Поиск адресов**  | Поиск по текстовой строке с поддержкой русского языка | ✅     |
-| 📋 **Детали объекта** | Получение полной информации об объекте адресации      | ✅     |
-| 🔐 **Токен**      | Автоматическое получение токена аутентификации        | ✅     |
+| Feature                | Description                                              | Status |
+| ---------------------- | -------------------------------------------------------- | ------ |
+| 🔍 **Address Search**  | Text-based address search with Russian language support | ✅     |
+| 📋 **Object Details**  | Get complete information about address objects           | ✅     |
+| 🔐 **Token Management**| Automatic authentication token retrieval                | ✅     |
+| ⚡ **Async Support**   | Both synchronous and asynchronous operations            | ✅     |
 
-## 🚀 Быстрый старт
+## 📊 Project Statistics
 
-### Минимальный пример
+![GitHub stars](https://img.shields.io/github/stars/invoxy/fias-public-api?style=social)
+![GitHub forks](https://img.shields.io/github/forks/invoxy/fias-public-api?style=social)
+![GitHub issues](https://img.shields.io/github/issues/invoxy/fias-public-api)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/invoxy/fias-public-api)
+
+## 🚀 Quick Start
+
+### Minimal Example
 
 ```python
-from fias_public_api import FiasPublicApi, get_token
+from fias_public_api import get_token_sync, SyncFPA
 
-# Получаем токен автоматически
-token = get_token()
+# Get token automatically
+token = get_token_sync()
 
-# Создаем клиент
-api = FiasPublicApi(token)
+# Create client
+api = SyncFPA(token)
 
-# Ищем адрес
-results = api.search("Москва, Красная площадь")
-print(f"Найдено: {len(results)} результатов")
+# Search for address
+results = api.search("Moscow, Red Square")
+print(f"Found: {len(results)} results")
 
-# Получаем детали первого результата
+# Get details of first result
 if results:
     details = api.details(results[0]['id'])
-    print(f"Адрес: {details.get('address', 'N/A')}")
+    print(f"Address: {details.get('address', 'N/A')}")
 ```
 
-## 📦 Установка
+### Async Example
+
+```python
+import asyncio
+from fias_public_api import get_token_async, AsyncFPA
+
+async def main():
+    # Get token automatically
+    token = await get_token_async()
+    
+    # Create async client
+    async with AsyncFPA(token) as api:
+        # Search for address
+        results = await api.search("Moscow, Red Square")
+        print(f"Found: {len(results)} results")
+        
+        # Get details of first result
+        if results:
+            details = await api.details(results[0]['id'])
+            print(f"Address: {details.get('address', 'N/A')}")
+
+asyncio.run(main())
+```
+
+## 📦 Installation
 
 ```bash
 pip install git+https://github.com/invoxy/fias-public-api
-
 ```
 
-### Зависимости
+### Dependencies
 
-| Пакет      | Версия     | Описание                         |
-| ---------- | ---------- | -------------------------------- |
-| `requests` | `>=2.32.5` | HTTP библиотека для API запросов |
+| Package     | Version     | Description                         |
+| ----------- | ----------- | ----------------------------------- |
+| `requests`  | `>=2.32.5`  | HTTP library for API requests       |
+| `httpx`     | `>=0.25.0`  | Async HTTP library for async operations |
 
-## 🔧 Использование
+## 🔧 Usage
 
-### Основные сценарии
+### Basic Scenarios
 
-#### 1. Поиск адресов
+#### 1. Address Search
 
 ```python
-# Простой поиск
-results = api.search("Москва")
+# Simple search
+results = api.search("Moscow")
 
-# Поиск с кастомным URL
-results = api.search("Санкт-Петербург", custom_url="https://custom-fias.ru/api")
+# Search with custom URL
+results = api.search("Saint Petersburg", url="https://custom-fias.ru/api")
 
-# Обработка результатов
+# Process results
 for result in results:
     print(f"ID: {result['id']}")
-    print(f"Адрес: {result['address']}")
-    print(f"Тип: {result['type']}")
+    print(f"Address: {result['address']}")
+    print(f"Type: {result['type']}")
     print("---")
 ```
 
-#### 2. Получение деталей объекта
+#### 2. Get Object Details
 
 ```python
-# Получаем детали по ID
+# Get details by ID
 object_id = 12345
 details = api.details(object_id)
 
-# Анализируем структуру ответа
-print("Доступные поля:")
+# Analyze response structure
+print("Available fields:")
 for key, value in details.items():
     if isinstance(value, (str, int, float, bool)) and value:
         print(f"  {key}: {value}")
 ```
 
-#### 3. Обработка ошибок
+#### 3. Error Handling
 
 ```python
 from requests.exceptions import HTTPError, RequestException
 
 try:
-    results = api.search("Несуществующий адрес")
+    results = api.search("Non-existent address")
 except HTTPError as e:
     if e.response.status_code == 404:
-        print("Адрес не найден")
+        print("Address not found")
     elif e.response.status_code == 401:
-        print("Неверный токен")
+        print("Invalid token")
     else:
-        print(f"HTTP ошибка: {e}")
+        print(f"HTTP error: {e}")
 except RequestException as e:
-    print(f"Ошибка сети: {e}")
+    print(f"Network error: {e}")
 except Exception as e:
-    print(f"Неизвестная ошибка: {e}")
+    print(f"Unknown error: {e}")
 ```
 
 ## 📚 API Reference
 
-### Класс `FiasPublicApi`
+### Synchronous Classes
 
-Основной класс для работы с API ФИАС.
+#### `SyncFPA`
 
-#### Конструктор
+Main client class for synchronous FIAS Public API operations.
+
+##### Constructor
 
 ```python
-FiasPublicApi(token: str)
+SyncFPA(token: str)
 ```
 
-**Параметры:**
+**Parameters:**
+- `token` (str) - Authentication token for API access
 
-- `token` (str) - Токен аутентификации для доступа к API
+##### Methods
 
-#### Методы
+###### `search(search_string: str, url: str = None) -> List[Dict]`
 
-##### `search(search_string: str, url: str = None) -> List[Dict]`
+Search for addresses by text string.
 
-Поиск адресов по текстовой строке.
+**Parameters:**
+- `search_string` (str) - Text to search for (address, street, city, etc.)
+- `url` (str, optional) - Custom API endpoint URL
 
-**Параметры:**
+**Returns:** List of found addresses as dictionaries
 
-- `search_string` (str) - Строка для поиска (адрес, улица, город и т.д.)
-- `url` (str, опционально) - Кастомный URL API endpoint
-
-**Возвращает:** Список найденных адресов в виде словарей
-
-**Пример ответа:**
+**Example response:**
 
 ```json
 [
@@ -147,162 +179,228 @@ FiasPublicApi(token: str)
 ]
 ```
 
-##### `details(object_id: int) -> Dict`
+###### `details(object_id: int) -> Dict`
 
-Получение детальной информации об объекте адресации.
+Get detailed information about an address object.
 
-**Параметры:**
+**Parameters:**
+- `object_id` (int) - FIAS object ID
 
-- `object_id` (int) - ID объекта в системе ФИАС
+**Returns:** Dictionary with detailed object information
 
-**Возвращает:** Словарь с детальной информацией об объекте
+### Asynchronous Classes
 
-### Функции
+#### `AsyncFPA`
 
-#### `get_token(url: str = "https://fias.nalog.ru/") -> str`
+Main client class for asynchronous FIAS Public API operations.
 
-Получение токена аутентификации от сервиса ФИАС.
+##### Constructor
 
-**Параметры:**
+```python
+AsyncFPA(token: str)
+```
 
-- `url` (str) - Базовый URL сервиса ФИАС
+**Parameters:**
+- `token` (str) - Authentication token for API access
 
-**Возвращает:** Строка с токеном аутентификации
+##### Context Manager
 
-**Исключения:**
+```python
+async with AsyncFPA(token) as api:
+    results = await api.search("Moscow")
+```
 
-- `ValueError` - Если получение токена не удалось
-- `requests.HTTPError` - Если HTTP запрос завершился с ошибкой
+##### Methods
+
+Same methods as `SyncFPA` but with `async`/`await` support:
+- `async search(search_string: str, url: str = None) -> List[Dict]`
+- `async details(object_id: int) -> Dict`
+
+### Functions
+
+#### `get_token_sync(url: str = "https://fias.nalog.ru/") -> str`
+
+Get authentication token from FIAS service (synchronous).
+
+**Parameters:**
+- `url` (str) - Base URL for FIAS service
+
+**Returns:** Authentication token string
+
+**Exceptions:**
+- `ValueError` - If token retrieval fails
+- `requests.HTTPError` - If HTTP request fails
+
+#### `get_token_async(url: str = "https://fias.nalog.ru/") -> str`
+
+Get authentication token from FIAS service (asynchronous).
+
+**Parameters:**
+- `url` (str) - Base URL for FIAS service
+
+**Returns:** Authentication token string
+
+**Exceptions:**
+- `ValueError` - If token retrieval fails
+- `httpx.HTTPError` - If HTTP request fails
 
 #### `STANDART_HEADERS(token: str) -> Dict[str, str]`
 
-Генерация стандартных заголовков для HTTP-запросов.
+Generate standard headers for HTTP requests.
 
-**Параметры:**
+**Parameters:**
+- `token` (str) - Authentication token
 
-- `token` (str) - Токен аутентификации
+**Returns:** Dictionary with headers for HTTP requests
 
-**Возвращает:** Словарь с заголовками для HTTP-запросов
+## 💡 Examples
 
-## 💡 Примеры
-
-### Пример 1: Поиск улиц в городе
+### Example 1: Find Streets in a City
 
 ```python
 def find_streets_in_city(city_name: str, street_pattern: str = ""):
-    """Поиск улиц в указанном городе"""
-    api = FiasPublicApi(get_token())
+    """Find streets in specified city"""
+    api = SyncFPA(get_token_sync())
 
-    # Ищем город
+    # Search for city
     cities = api.search(city_name)
     if not cities:
-        print(f"Город '{city_name}' не найден")
+        print(f"City '{city_name}' not found")
         return
 
     city = cities[0]
-    print(f"Найден город: {city['address']}")
+    print(f"Found city: {city['address']}")
 
-    # Ищем улицы
+    # Search for streets
     search_query = f"{city_name}, {street_pattern}" if street_pattern else city_name
     streets = api.search(search_query)
 
-    print(f"\nНайдено улиц: {len(streets)}")
-    for street in streets[:10]:  # Показываем первые 10
+    print(f"\nFound streets: {len(streets)}")
+    for street in streets[:10]:  # Show first 10
         print(f"  - {street.get('address', 'N/A')}")
 
-# Использование
-find_streets_in_city("Москва", "Тверская")
+# Usage
+find_streets_in_city("Moscow", "Tverskaya")
 ```
 
-### Пример 2: Получение иерархии адреса
+### Example 2: Get Address Hierarchy
 
 ```python
 def get_address_hierarchy(address_id: int):
-    """Получение полной иерархии адреса"""
-    api = FiasPublicApi(get_token())
+    """Get complete address hierarchy"""
+    api = SyncFPA(get_token_sync())
 
     try:
         details = api.details(address_id)
 
-        print("🏠 Иерархия адреса:")
-        print(f"  Уровень: {details.get('level', 'N/A')}")
-        print(f"  Тип: {details.get('type', 'N/A')}")
-        print(f"  Название: {details.get('name', 'N/A')}")
-        print(f"  Полный адрес: {details.get('address', 'N/A')}")
+        print("🏠 Address hierarchy:")
+        print(f"  Level: {details.get('level', 'N/A')}")
+        print(f"  Type: {details.get('type', 'N/A')}")
+        print(f"  Name: {details.get('name', 'N/A')}")
+        print(f"  Full address: {details.get('address', 'N/A')}")
 
-        # Дополнительная информация
+        # Additional information
         if 'coordinates' in details:
             coords = details['coordinates']
-            print(f"  Координаты: {coords.get('lat', 'N/A')}, {coords.get('lon', 'N/A')}")
+            print(f"  Coordinates: {coords.get('lat', 'N/A')}, {coords.get('lon', 'N/A')}")
 
     except Exception as e:
-        print(f"❌ Ошибка при получении деталей: {e}")
+        print(f"❌ Error getting details: {e}")
 
-# Использование
+# Usage
 get_address_hierarchy(12345)
 ```
 
-### Пример 3: Массовый поиск адресов
+### Example 3: Batch Address Search (Async)
 
 ```python
-import time
+import asyncio
 from typing import List, Dict
 
-def batch_address_search(queries: List[str], delay: float = 0.1) -> Dict[str, List]:
-    """Массовый поиск адресов с задержкой между запросами"""
-    api = FiasPublicApi(get_token())
-    results = {}
+async def batch_address_search_async(queries: List[str], delay: float = 0.1) -> Dict[str, List]:
+    """Batch address search with delay between requests"""
+    token = await get_token_async()
+    
+    async with AsyncFPA(token) as api:
+        results = {}
+        
+        print(f"🔍 Starting search for {len(queries)} addresses...")
+        
+        for i, query in enumerate(queries, 1):
+            try:
+                print(f"  [{i}/{len(queries)}] Searching: {query}")
+                search_results = await api.search(query)
+                results[query] = search_results
+                print(f"     Found: {len(search_results)} results")
+                
+                # Delay between requests
+                if i < len(queries):
+                    await asyncio.sleep(delay)
+                    
+            except Exception as e:
+                print(f"     ❌ Error: {e}")
+                results[query] = []
+        
+        return results
 
-    print(f"🔍 Начинаем поиск {len(queries)} адресов...")
-
-    for i, query in enumerate(queries, 1):
-        try:
-            print(f"  [{i}/{len(queries)}] Ищем: {query}")
-            search_results = api.search(query)
-            results[query] = search_results
-            print(f"     Найдено: {len(search_results)} результатов")
-
-            # Задержка между запросами
-            if i < len(queries):
-                time.sleep(delay)
-
-        except Exception as e:
-            print(f"     ❌ Ошибка: {e}")
-            results[query] = []
-
-    return results
-
-# Использование
+# Usage
 addresses_to_search = [
-    "Москва, Красная площадь",
-    "Санкт-Петербург, Дворцовая площадь",
-    "Казань, Кремль",
-    "Новосибирск, Красный проспект"
+    "Moscow, Red Square",
+    "Saint Petersburg, Palace Square",
+    "Kazan, Kremlin",
+    "Novosibirsk, Red Avenue"
 ]
 
-results = batch_address_search(addresses_to_search, delay=0.2)
+results = asyncio.run(batch_address_search_async(addresses_to_search, delay=0.2))
 ```
 
-## 📄 Лицензия
+### Example 4: Concurrent Async Operations
 
-Этот проект распространяется под лицензией MIT. См. файл [LICENSE](LICENSE) для деталей.
+```python
+import asyncio
+from typing import List
 
-## 🔗 Полезные ссылки
-- [🌐 Официальный сайт ФИАС](https://fias.nalog.ru/)
-- [📡 Публичное API ФИАС](https://fias-public-service.nalog.ru/)
-## 📊 Статистика проекта
+async def concurrent_address_search(addresses: List[str]) -> List[Dict]:
+    """Search multiple addresses concurrently"""
+    token = await get_token_async()
+    
+    async with AsyncFPA(token) as api:
+        # Create tasks for concurrent execution
+        tasks = [api.search(address) for address in addresses]
+        
+        # Execute all searches concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Process results
+        processed_results = []
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                print(f"Error searching '{addresses[i]}': {result}")
+                processed_results.append([])
+            else:
+                processed_results.append(result)
+        
+        return processed_results
 
-![GitHub stars](https://img.shields.io/github/stars/invoxy/fias-public-api?style=social)
-![GitHub forks](https://img.shields.io/github/forks/invoxy/fias-public-api?style=social)
-![GitHub issues](https://img.shields.io/github/issues/invoxy/fias-public-api)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/invoxy/fias-public-api)
+# Usage
+addresses = ["Moscow", "Saint Petersburg", "Kazan", "Novosibirsk"]
+results = asyncio.run(concurrent_address_search(addresses))
+```
+
+## 📄 License
+
+This project is distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## 🔗 Useful Links
+
+- [🌐 Official FIAS Website](https://fias.nalog.ru/)
 
 ---
 
 <div align="center">
 
-**Сделано с ❤️**
+**Made with ❤️**
 
-[![GitHub](https://img.shields.io/badge/GitHub-invoxy-black?style=flat-square&logo=github)](https://github.com/invoxy)
+[![GitHub](https://img.shields.io/badge/GitHub-quonaro-black?style=flat-square&logo=github)](https://github.com/quonaro)
 
 </div>

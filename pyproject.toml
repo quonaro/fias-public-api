@@ -20,6 +20,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
 ]
 dependencies = [
+    "httpx>=0.28.1",
     "requests>=2.32.5",
 ]
 
