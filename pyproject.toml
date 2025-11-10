@@ -1,12 +1,12 @@
 [project]
 name = "fias-public-api"
-version = "1.0.0"
+version = "1.2.0"
 description = "Python client for FIAS Public API - Russian address database"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
-    {name = "invoxy", email = "quonaro@mail.ru"}
+    {name = "quonaro", email = "quonaro@mail.ru"}
 ]
 keywords = ["fias", "russia", "address", "api", "nalog"]
 classifiers = [
