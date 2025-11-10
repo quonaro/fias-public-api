@@ -1,16 +1,17 @@
 """
-FIAS Public API Python Client (Async)
+Клиент для FIAS Public API (Python, асинхронный)
 
-A Python client library for interacting with the Russian FIAS (Federal Information Address System) Public API.
-Provides easy access to address search and details functionality with async/await support.
+Библиотека для работы с публичным API ФИАС (Федеральная информационная адресная система).
+Предоставляет простой доступ к функциям поиска адресов и получения детальной информации с поддержкой async/await.
 
-Example:
+Пример:
     >>> import asyncio
-    >>> from fias_public_api.async import FiasPublicApi
+    >>> from fias_public_api import AsyncFPA, get_token_async
     >>> async def main():
-    ...     api = FiasPublicApi("your_token")
-    ...     results = await api.search("Москва, Красная площадь")
-    ...     details = await api.details(12345)
+    ...     token = await get_token_async()
+    ...     async with AsyncFPA(token) as api:
+    ...         results = await api.search("Москва, Красная площадь")
+    ...         details = await api.details(12345)
     >>> asyncio.run(main())
 """
 
@@ -18,17 +19,17 @@ import httpx
 from .constants import STANDART_HEADERS
 
 async def get_token_async(url="https://fias.nalog.ru/"):
-    """Get authentication token from FIAS service.
+    """Получить токен аутентификации из сервиса ФИАС.
 
     Args:
-        url (str): Base URL for FIAS service
+        url (str): Базовый URL сервиса ФИАС
 
     Returns:
-        str: Authentication token
+        str: Токен аутентификации
 
     Raises:
-        ValueError: If token retrieval fails
-        httpx.HTTPError: If HTTP request fails
+        ValueError: Если не удалось получить токен
+        httpx.HTTPError: Если HTTP запрос завершился ошибкой
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -36,18 +37,18 @@ async def get_token_async(url="https://fias.nalog.ru/"):
         )
         response.raise_for_status()
         if response.status_code != 200:
-            raise ValueError("Failed to get token")
+            raise ValueError("Не удалось получить токен")
         return response.json()["Token"]
 
 
 class AsyncFPA:
-    """Main client class for FIAS Public API operations.
+    """Основной класс клиента для работы с FIAS Public API (асинхронный).
 
-    This class provides methods to search addresses and get detailed information
-    about address objects in the Russian FIAS system.
+    Этот класс предоставляет методы для поиска адресов и получения детальной информации
+    об адресных объектах в системе ФИАС с поддержкой асинхронных операций.
 
     Args:
-        token (str): Authentication token for API access
+        token (str): Токен аутентификации для доступа к API
     """
 
     def __init__(self, token: str):
@@ -55,33 +56,33 @@ class AsyncFPA:
         self._client = None
 
     async def __aenter__(self):
-        """Async context manager entry."""
+        """Вход в асинхронный контекстный менеджер."""
         self._client = httpx.AsyncClient()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
+        """Выход из асинхронного контекстного менеджера."""
         if self._client:
             await self._client.aclose()
 
     @property
     def client(self):
-        """Get or create httpx client."""
+        """Получить или создать httpx клиент."""
         if self._client is None:
             self._client = httpx.AsyncClient()
         return self._client
 
     async def details(self, object_id: int):
-        """Get detailed information about an address object by its ID.
+        """Получить детальную информацию об адресном объекте по его ID.
 
         Args:
-            object_id (int): FIAS object ID
+            object_id (int): ID объекта ФИАС
 
         Returns:
-            dict: Address object details
+            dict: Детальная информация об адресном объекте
 
         Raises:
-            httpx.HTTPError: If HTTP request fails
+            httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
         response = await self.client.get(
             "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemById",
@@ -96,17 +97,17 @@ class AsyncFPA:
         search_string: str,
         url: str = "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressHint",
     ):
-        """Search for addresses by text string.
+        """Поиск адресов по текстовой строке.
 
         Args:
-            search_string (str): Text to search for (address, street, etc.)
-            url (str): API endpoint URL for search
+            search_string (str): Текст для поиска (адрес, улица и т.д.)
+            url (str): URL конечной точки API для поиска
 
         Returns:
-            list: List of address hints matching the search
+            list: Список подсказок адресов, соответствующих поисковому запросу
 
         Raises:
-            httpx.HTTPError: If HTTP request fails
+            httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
         search_string = search_string.encode("utf-8").decode("utf-8")
         payload = {

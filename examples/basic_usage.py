@@ -8,7 +8,7 @@
 - Получение деталей объекта
 """
 
-from fias_public_api import FiasPublicApi, get_token
+from fias_public_api import SyncFPA, get_token_sync
 
 def main():
     print("🚀 FIAS Public API - Пример использования\n")
@@ -16,12 +16,12 @@ def main():
     try:
         # Получаем токен
         print("1. Получаем токен аутентификации...")
-        token = get_token()
+        token = get_token_sync()
         print(f"✅ Токен получен: {token[:20]}...")
 
         # Создаем клиент
         print("\n2. Создаем API клиент...")
-        api = FiasPublicApi(token)
+        api = SyncFPA(token)
         print("✅ Клиент создан")
 
         # Ищем адрес

@@ -2,171 +2,171 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![PyPI](https://img.shields.io/badge/PyPI-Not%20Published-red.svg)](https://pypi.org/project/fias-public-api/)
+[![PyPI](https://img.shields.io/badge/PyPI-Не%20опубликовано-red.svg)](https://pypi.org/project/fias-public-api/)
 
-> 🚀 **Simple and convenient Python client for working with the Russian FIAS (Federal Information Address System) Public API**
+> 🚀 **Простой и удобный Python клиент для работы с публичным API ФИАС (Федеральная информационная адресная система)**
 
-## ✨ Features
+## ✨ Возможности
 
-| Feature                | Description                                              | Status |
-| ---------------------- | -------------------------------------------------------- | ------ |
-| 🔍 **Address Search**  | Text-based address search with Russian language support | ✅     |
-| 📋 **Object Details**  | Get complete information about address objects           | ✅     |
-| 🔐 **Token Management**| Automatic authentication token retrieval                | ✅     |
-| ⚡ **Async Support**   | Both synchronous and asynchronous operations            | ✅     |
+| Возможность                | Описание                                              | Статус |
+| -------------------------- | ----------------------------------------------------- | ------ |
+| 🔍 **Поиск адресов**       | Текстовый поиск адресов с поддержкой русского языка  | ✅     |
+| 📋 **Детали объектов**     | Получение полной информации об адресных объектах     | ✅     |
+| 🔐 **Управление токенами** | Автоматическое получение токена аутентификации       | ✅     |
+| ⚡ **Поддержка async**     | Синхронные и асинхронные операции                    | ✅     |
 
-## 📊 Project Statistics
+## 📊 Статистика проекта
 
 ![GitHub stars](https://img.shields.io/github/stars/invoxy/fias-public-api?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/invoxy/fias-public-api?style=social)
 ![GitHub issues](https://img.shields.io/github/issues/invoxy/fias-public-api)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr/invoxy/fias-public-api)
 
-## 🚀 Quick Start
+## 🚀 Быстрый старт
 
-### Minimal Example
+### Минимальный пример
 
 ```python
 from fias_public_api import get_token_sync, SyncFPA
 
-# Get token automatically
+# Получаем токен автоматически
 token = get_token_sync()
 
-# Create client
+# Создаем клиент
 api = SyncFPA(token)
 
-# Search for address
-results = api.search("Moscow, Red Square")
-print(f"Found: {len(results)} results")
+# Ищем адрес
+results = api.search("Москва, Красная площадь")
+print(f"Найдено: {len(results)} результатов")
 
-# Get details of first result
+# Получаем детали первого результата
 if results:
     details = api.details(results[0]['id'])
-    print(f"Address: {details.get('address', 'N/A')}")
+    print(f"Адрес: {details.get('address', 'N/A')}")
 ```
 
-### Async Example
+### Асинхронный пример
 
 ```python
 import asyncio
 from fias_public_api import get_token_async, AsyncFPA
 
 async def main():
-    # Get token automatically
+    # Получаем токен автоматически
     token = await get_token_async()
     
-    # Create async client
+    # Создаем асинхронный клиент
     async with AsyncFPA(token) as api:
-        # Search for address
-        results = await api.search("Moscow, Red Square")
-        print(f"Found: {len(results)} results")
+        # Ищем адрес
+        results = await api.search("Москва, Красная площадь")
+        print(f"Найдено: {len(results)} результатов")
         
-        # Get details of first result
+        # Получаем детали первого результата
         if results:
             details = await api.details(results[0]['id'])
-            print(f"Address: {details.get('address', 'N/A')}")
+            print(f"Адрес: {details.get('address', 'N/A')}")
 
 asyncio.run(main())
 ```
 
-## 📦 Installation
+## 📦 Установка
 
 ```bash
 pip install git+https://github.com/invoxy/fias-public-api
 ```
 
-### Dependencies
+### Зависимости
 
-| Package     | Version     | Description                         |
-| ----------- | ----------- | ----------------------------------- |
-| `requests`  | `>=2.32.5`  | HTTP library for API requests       |
-| `httpx`     | `>=0.25.0`  | Async HTTP library for async operations |
+| Пакет      | Версия     | Описание                              |
+| ---------- | ---------- | ------------------------------------- |
+| `requests` | `>=2.32.5` | HTTP библиотека для API запросов      |
+| `httpx`    | `>=0.25.0` | Асинхронная HTTP библиотека           |
 
-## 🔧 Usage
+## 🔧 Использование
 
-### Basic Scenarios
+### Базовые сценарии
 
-#### 1. Address Search
+#### 1. Поиск адресов
 
 ```python
-# Simple search
-results = api.search("Moscow")
+# Простой поиск
+results = api.search("Москва")
 
-# Search with custom URL
-results = api.search("Saint Petersburg", url="https://custom-fias.ru/api")
+# Поиск с кастомным URL
+results = api.search("Санкт-Петербург", url="https://custom-fias.ru/api")
 
-# Process results
+# Обработка результатов
 for result in results:
     print(f"ID: {result['id']}")
-    print(f"Address: {result['address']}")
-    print(f"Type: {result['type']}")
+    print(f"Адрес: {result['address']}")
+    print(f"Тип: {result['type']}")
     print("---")
 ```
 
-#### 2. Get Object Details
+#### 2. Получение деталей объекта
 
 ```python
-# Get details by ID
+# Получаем детали по ID
 object_id = 12345
 details = api.details(object_id)
 
-# Analyze response structure
-print("Available fields:")
+# Анализируем структуру ответа
+print("Доступные поля:")
 for key, value in details.items():
     if isinstance(value, (str, int, float, bool)) and value:
         print(f"  {key}: {value}")
 ```
 
-#### 3. Error Handling
+#### 3. Обработка ошибок
 
 ```python
 from requests.exceptions import HTTPError, RequestException
 
 try:
-    results = api.search("Non-existent address")
+    results = api.search("Несуществующий адрес")
 except HTTPError as e:
     if e.response.status_code == 404:
-        print("Address not found")
+        print("Адрес не найден")
     elif e.response.status_code == 401:
-        print("Invalid token")
+        print("Неверный токен")
     else:
-        print(f"HTTP error: {e}")
+        print(f"HTTP ошибка: {e}")
 except RequestException as e:
-    print(f"Network error: {e}")
+    print(f"Ошибка сети: {e}")
 except Exception as e:
-    print(f"Unknown error: {e}")
+    print(f"Неизвестная ошибка: {e}")
 ```
 
-## 📚 API Reference
+## 📚 Справочник API
 
-### Synchronous Classes
+### Синхронные классы
 
 #### `SyncFPA`
 
-Main client class for synchronous FIAS Public API operations.
+Основной класс клиента для синхронных операций с FIAS Public API.
 
-##### Constructor
+##### Конструктор
 
 ```python
 SyncFPA(token: str)
 ```
 
-**Parameters:**
-- `token` (str) - Authentication token for API access
+**Параметры:**
+- `token` (str) - Токен аутентификации для доступа к API
 
-##### Methods
+##### Методы
 
 ###### `search(search_string: str, url: str = None) -> List[Dict]`
 
-Search for addresses by text string.
+Поиск адресов по текстовой строке.
 
-**Parameters:**
-- `search_string` (str) - Text to search for (address, street, city, etc.)
-- `url` (str, optional) - Custom API endpoint URL
+**Параметры:**
+- `search_string` (str) - Текст для поиска (адрес, улица, город и т.д.)
+- `url` (str, optional) - Кастомный URL конечной точки API
 
-**Returns:** List of found addresses as dictionaries
+**Возвращает:** Список найденных адресов в виде словарей
 
-**Example response:**
+**Пример ответа:**
 
 ```json
 [
@@ -181,225 +181,225 @@ Search for addresses by text string.
 
 ###### `details(object_id: int) -> Dict`
 
-Get detailed information about an address object.
+Получить детальную информацию об адресном объекте.
 
-**Parameters:**
-- `object_id` (int) - FIAS object ID
+**Параметры:**
+- `object_id` (int) - ID объекта ФИАС
 
-**Returns:** Dictionary with detailed object information
+**Возвращает:** Словарь с детальной информацией об объекте
 
-### Asynchronous Classes
+### Асинхронные классы
 
 #### `AsyncFPA`
 
-Main client class for asynchronous FIAS Public API operations.
+Основной класс клиента для асинхронных операций с FIAS Public API.
 
-##### Constructor
+##### Конструктор
 
 ```python
 AsyncFPA(token: str)
 ```
 
-**Parameters:**
-- `token` (str) - Authentication token for API access
+**Параметры:**
+- `token` (str) - Токен аутентификации для доступа к API
 
-##### Context Manager
+##### Контекстный менеджер
 
 ```python
 async with AsyncFPA(token) as api:
-    results = await api.search("Moscow")
+    results = await api.search("Москва")
 ```
 
-##### Methods
+##### Методы
 
-Same methods as `SyncFPA` but with `async`/`await` support:
+Те же методы, что и у `SyncFPA`, но с поддержкой `async`/`await`:
 - `async search(search_string: str, url: str = None) -> List[Dict]`
 - `async details(object_id: int) -> Dict`
 
-### Functions
+### Функции
 
 #### `get_token_sync(url: str = "https://fias.nalog.ru/") -> str`
 
-Get authentication token from FIAS service (synchronous).
+Получить токен аутентификации из сервиса ФИАС (синхронно).
 
-**Parameters:**
-- `url` (str) - Base URL for FIAS service
+**Параметры:**
+- `url` (str) - Базовый URL сервиса ФИАС
 
-**Returns:** Authentication token string
+**Возвращает:** Строка с токеном аутентификации
 
-**Exceptions:**
-- `ValueError` - If token retrieval fails
-- `requests.HTTPError` - If HTTP request fails
+**Исключения:**
+- `ValueError` - Если не удалось получить токен
+- `requests.HTTPError` - Если HTTP запрос завершился ошибкой
 
 #### `get_token_async(url: str = "https://fias.nalog.ru/") -> str`
 
-Get authentication token from FIAS service (asynchronous).
+Получить токен аутентификации из сервиса ФИАС (асинхронно).
 
-**Parameters:**
-- `url` (str) - Base URL for FIAS service
+**Параметры:**
+- `url` (str) - Базовый URL сервиса ФИАС
 
-**Returns:** Authentication token string
+**Возвращает:** Строка с токеном аутентификации
 
-**Exceptions:**
-- `ValueError` - If token retrieval fails
-- `httpx.HTTPError` - If HTTP request fails
+**Исключения:**
+- `ValueError` - Если не удалось получить токен
+- `httpx.HTTPError` - Если HTTP запрос завершился ошибкой
 
 #### `STANDART_HEADERS(token: str) -> Dict[str, str]`
 
-Generate standard headers for HTTP requests.
+Создать стандартные заголовки для HTTP запросов.
 
-**Parameters:**
-- `token` (str) - Authentication token
+**Параметры:**
+- `token` (str) - Токен аутентификации
 
-**Returns:** Dictionary with headers for HTTP requests
+**Возвращает:** Словарь с заголовками для HTTP запросов
 
-## 💡 Examples
+## 💡 Примеры
 
-### Example 1: Find Streets in a City
+### Пример 1: Поиск улиц в городе
 
 ```python
 def find_streets_in_city(city_name: str, street_pattern: str = ""):
-    """Find streets in specified city"""
+    """Найти улицы в указанном городе"""
     api = SyncFPA(get_token_sync())
 
-    # Search for city
+    # Ищем город
     cities = api.search(city_name)
     if not cities:
-        print(f"City '{city_name}' not found")
+        print(f"Город '{city_name}' не найден")
         return
 
     city = cities[0]
-    print(f"Found city: {city['address']}")
+    print(f"Найден город: {city['address']}")
 
-    # Search for streets
+    # Ищем улицы
     search_query = f"{city_name}, {street_pattern}" if street_pattern else city_name
     streets = api.search(search_query)
 
-    print(f"\nFound streets: {len(streets)}")
-    for street in streets[:10]:  # Show first 10
+    print(f"\nНайдено улиц: {len(streets)}")
+    for street in streets[:10]:  # Показываем первые 10
         print(f"  - {street.get('address', 'N/A')}")
 
-# Usage
-find_streets_in_city("Moscow", "Tverskaya")
+# Использование
+find_streets_in_city("Москва", "Тверская")
 ```
 
-### Example 2: Get Address Hierarchy
+### Пример 2: Получение иерархии адреса
 
 ```python
 def get_address_hierarchy(address_id: int):
-    """Get complete address hierarchy"""
+    """Получить полную иерархию адреса"""
     api = SyncFPA(get_token_sync())
 
     try:
         details = api.details(address_id)
 
-        print("🏠 Address hierarchy:")
-        print(f"  Level: {details.get('level', 'N/A')}")
-        print(f"  Type: {details.get('type', 'N/A')}")
-        print(f"  Name: {details.get('name', 'N/A')}")
-        print(f"  Full address: {details.get('address', 'N/A')}")
+        print("🏠 Иерархия адреса:")
+        print(f"  Уровень: {details.get('level', 'N/A')}")
+        print(f"  Тип: {details.get('type', 'N/A')}")
+        print(f"  Название: {details.get('name', 'N/A')}")
+        print(f"  Полный адрес: {details.get('address', 'N/A')}")
 
-        # Additional information
+        # Дополнительная информация
         if 'coordinates' in details:
             coords = details['coordinates']
-            print(f"  Coordinates: {coords.get('lat', 'N/A')}, {coords.get('lon', 'N/A')}")
+            print(f"  Координаты: {coords.get('lat', 'N/A')}, {coords.get('lon', 'N/A')}")
 
     except Exception as e:
-        print(f"❌ Error getting details: {e}")
+        print(f"❌ Ошибка при получении деталей: {e}")
 
-# Usage
+# Использование
 get_address_hierarchy(12345)
 ```
 
-### Example 3: Batch Address Search (Async)
+### Пример 3: Пакетный поиск адресов (Async)
 
 ```python
 import asyncio
 from typing import List, Dict
 
 async def batch_address_search_async(queries: List[str], delay: float = 0.1) -> Dict[str, List]:
-    """Batch address search with delay between requests"""
+    """Пакетный поиск адресов с задержкой между запросами"""
     token = await get_token_async()
     
     async with AsyncFPA(token) as api:
         results = {}
         
-        print(f"🔍 Starting search for {len(queries)} addresses...")
+        print(f"🔍 Начинаем поиск для {len(queries)} адресов...")
         
         for i, query in enumerate(queries, 1):
             try:
-                print(f"  [{i}/{len(queries)}] Searching: {query}")
+                print(f"  [{i}/{len(queries)}] Ищем: {query}")
                 search_results = await api.search(query)
                 results[query] = search_results
-                print(f"     Found: {len(search_results)} results")
+                print(f"     Найдено: {len(search_results)} результатов")
                 
-                # Delay between requests
+                # Задержка между запросами
                 if i < len(queries):
                     await asyncio.sleep(delay)
                     
             except Exception as e:
-                print(f"     ❌ Error: {e}")
+                print(f"     ❌ Ошибка: {e}")
                 results[query] = []
         
         return results
 
-# Usage
+# Использование
 addresses_to_search = [
-    "Moscow, Red Square",
-    "Saint Petersburg, Palace Square",
-    "Kazan, Kremlin",
-    "Novosibirsk, Red Avenue"
+    "Москва, Красная площадь",
+    "Санкт-Петербург, Дворцовая площадь",
+    "Казань, Кремль",
+    "Новосибирск, Красный проспект"
 ]
 
 results = asyncio.run(batch_address_search_async(addresses_to_search, delay=0.2))
 ```
 
-### Example 4: Concurrent Async Operations
+### Пример 4: Параллельные асинхронные операции
 
 ```python
 import asyncio
 from typing import List
 
 async def concurrent_address_search(addresses: List[str]) -> List[Dict]:
-    """Search multiple addresses concurrently"""
+    """Поиск нескольких адресов параллельно"""
     token = await get_token_async()
     
     async with AsyncFPA(token) as api:
-        # Create tasks for concurrent execution
+        # Создаем задачи для параллельного выполнения
         tasks = [api.search(address) for address in addresses]
         
-        # Execute all searches concurrently
+        # Выполняем все поиски параллельно
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        # Process results
+        # Обрабатываем результаты
         processed_results = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
-                print(f"Error searching '{addresses[i]}': {result}")
+                print(f"Ошибка при поиске '{addresses[i]}': {result}")
                 processed_results.append([])
             else:
                 processed_results.append(result)
         
         return processed_results
 
-# Usage
-addresses = ["Moscow", "Saint Petersburg", "Kazan", "Novosibirsk"]
+# Использование
+addresses = ["Москва", "Санкт-Петербург", "Казань", "Новосибирск"]
 results = asyncio.run(concurrent_address_search(addresses))
 ```
 
-## 📄 License
+## 📄 Лицензия
 
-This project is distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Этот проект распространяется под лицензией MIT. Подробности см. в файле [LICENSE](LICENSE).
 
-## 🔗 Useful Links
+## 🔗 Полезные ссылки
 
-- [🌐 Official FIAS Website](https://fias.nalog.ru/)
+- [🌐 Официальный сайт ФИАС](https://fias.nalog.ru/)
 
 ---
 
 <div align="center">
 
-**Made with ❤️**
+**Сделано с ❤️**
 
 [![GitHub](https://img.shields.io/badge/GitHub-quonaro-black?style=flat-square&logo=github)](https://github.com/quonaro)
 
