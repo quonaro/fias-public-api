@@ -170,27 +170,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install build dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install build twine
+      - name: Install UV
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
-      - name: Build package
-        run: python -m build
+      - name: Build package with UV
+        run: uv build
 
-      - name: Publish to PyPI
+      - name: Publish to PyPI (Trusted Publishing)
         if: |
           github.event_name == 'release' || 
           github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'push' && steps.check_tag.outputs.exists == 'false')
-        uses: pypa/gh-action-pypi-publish@release/v1
         continue-on-error: true
         id: publish_trusted
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
           print-hash: true
 
-      - name: Publish to PyPI (API Token - fallback)
+      - name: Publish to PyPI via UV (API Token fallback)
         if: |
           (github.event_name == 'release' || 
            github.event_name == 'workflow_dispatch' ||
@@ -198,10 +198,8 @@ jobs:
           (steps.publish_trusted.outcome == 'failure' || steps.publish_trusted.outcome == 'cancelled') &&
           secrets.PYPI_API_TOKEN
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          echo "Trusted publishing failed, using API token as fallback"
-          python -m pip install --upgrade twine
-          python -m twine upload dist/*
+          echo "Trusted publishing failed, using UV with API token as fallback"
+          uv publish --token "$UV_PUBLISH_TOKEN"
 
