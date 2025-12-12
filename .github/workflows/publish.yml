@@ -195,11 +195,14 @@ jobs:
           (github.event_name == 'release' || 
            github.event_name == 'workflow_dispatch' ||
            (github.event_name == 'push' && steps.check_tag.outputs.exists == 'false')) &&
-          (steps.publish_trusted.outcome == 'failure' || steps.publish_trusted.outcome == 'cancelled') &&
-          secrets.PYPI_API_TOKEN
+          (steps.publish_trusted.outcome == 'failure' || steps.publish_trusted.outcome == 'cancelled')
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
+          if [ -z "$UV_PUBLISH_TOKEN" ]; then
+            echo "PYPI_API_TOKEN secret is not set, skipping UV publish fallback"
+            exit 0
+          fi
           echo "Trusted publishing failed, using UV with API token as fallback"
           uv publish --token "$UV_PUBLISH_TOKEN"
 
