@@ -62,9 +62,9 @@ class TestSyncFPA:
             assert isinstance(first_result, dict)
 
     def test_search_empty_query(self, api):
-        """Test search with empty query"""
-        results = api.search("")
-        assert isinstance(results, list)
+        """Test search with empty query raises ValueError"""
+        with pytest.raises(ValueError, match="search_string cannot be empty"):
+            api.search("")
 
     def test_search_special_characters(self, api):
         """Test search with special characters"""

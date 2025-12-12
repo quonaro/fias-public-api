@@ -1,4 +1,4 @@
-from .constants import STANDART_HEADERS, AddressType
+from .constants import STANDART_HEADERS, AddressType, retry_on_error
 from .fias_async import get_token_async, AsyncFPA
 from .fias_sync import get_token_sync, SyncFPA
 from . import constants, fias_async, fias_sync
@@ -6,6 +6,7 @@ from . import constants, fias_async, fias_sync
 __all__ = [
     "STANDART_HEADERS",
     "AddressType",
+    "retry_on_error",
     "get_token_async",
     "get_token_sync",
     "AsyncFPA",

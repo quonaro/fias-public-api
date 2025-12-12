@@ -4,13 +4,14 @@ Tests for asynchronous FIAS Public API client
 import pytest
 import pytest_asyncio
 import asyncio
-from fias_public_api import get_token_async, AsyncFPA, AddressType
+from fias_public_api import get_token_async, AsyncFPA, AddressType, retry_on_error
 
 
 class TestGetTokenAsync:
     """Tests for get_token_async function"""
 
     @pytest.mark.asyncio
+    @retry_on_error(max_retries=3, delay=0.5)
     async def test_get_token_async_success(self):
         """Test successful token retrieval"""
         token = await get_token_async()
@@ -78,9 +79,9 @@ class TestAsyncFPA:
 
     @pytest.mark.asyncio
     async def test_search_empty_query(self, api):
-        """Test search with empty query"""
-        results = await api.search("")
-        assert isinstance(results, list)
+        """Test search with empty query raises ValueError"""
+        with pytest.raises(ValueError, match="search_string cannot be empty"):
+            await api.search("")
 
     @pytest.mark.asyncio
     async def test_search_special_characters(self, api):

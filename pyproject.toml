@@ -35,6 +35,38 @@ packages = ["fias_public_api"]
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[tool.uv]
+[dependency-groups]
+dev = ["pytest", "ruff", "pytest-asyncio"]
 
-dev-dependencies = ["pytest", "ruff", "pytest-asyncio"]
+[tool.pytest.ini_options]
+# Test discovery patterns
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Output options - более понятный вывод как в Python интерпретаторе
+addopts = [
+    "-vv",                    # Verbose output - показывает каждый тест
+    "--tb=short",             # Short traceback format (как в Python)
+    "--showlocals",            # Показывать локальные переменные при ошибках
+    "--strict-markers",        # Строгая проверка маркеров
+    "--color=yes",            # Цветной вывод
+    "--durations=10",         # Показывать 10 самых медленных тестов
+]
+
+# Markers для категоризации тестов
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Логирование
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+
+# Минимальная версия pytest
+minversion = "7.0"

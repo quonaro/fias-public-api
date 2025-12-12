@@ -24,5 +24,4 @@ test:
             uv run pytest tests/test_fias_sync.py
 
     > before: uv sync
-    > fallback[hide]: clean
     > after[hide]: clean
