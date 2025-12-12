@@ -93,10 +93,10 @@ class AsyncFPA:
         response.raise_for_status()
         return response.json()
 
-    async def details_by_guid(self, guid: str, address_type: int | AddressType = 2):
+    async def details_by_guid(self, object_guid: str, address_type: int | AddressType = 2):
         """Получить детальную информацию об адресном объекте по его GUID.
         Args:
-            guid (str): GUID объекта ФИАС
+            object_guid (str): GUID объекта ФИАС
             address_type (int | AddressType): Тип адреса (по умолчанию 2)
 
         Returns:
@@ -104,7 +104,7 @@ class AsyncFPA:
         """
         response = await self.client.get(
             "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemByGuid",
-            params={"guid": guid, "address_type": address_type},
+            params={"object_guid": object_guid, "address_type": address_type},
             headers=STANDART_HEADERS(self.token),
         )
         response.raise_for_status()
