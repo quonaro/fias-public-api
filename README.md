@@ -74,6 +74,8 @@ asyncio.run(main())
 
 ### Установка из PyPI (рекомендуется)
 
+Установите пакет из [PyPI](https://pypi.org/project/fias-public-api/):
+
 ```bash
 pip install fias-public-api
 ```
@@ -435,6 +437,7 @@ results = asyncio.run(concurrent_address_search(addresses))
 
 ## 🔗 Полезные ссылки
 
+- [📦 PyPI Package](https://pypi.org/project/fias-public-api/) - Установка через PyPI
 - [🌐 Официальный сайт ФИАС](https://fias.nalog.ru/)
 
 ---
