@@ -184,7 +184,24 @@ jobs:
           github.event_name == 'workflow_dispatch' ||
           (github.event_name == 'push' && steps.check_tag.outputs.exists == 'false')
         uses: pypa/gh-action-pypi-publish@release/v1
+        continue-on-error: true
+        id: publish_trusted
         with:
           packages-dir: dist/
           print-hash: true
+
+      - name: Publish to PyPI (API Token - fallback)
+        if: |
+          (github.event_name == 'release' || 
+           github.event_name == 'workflow_dispatch' ||
+           (github.event_name == 'push' && steps.check_tag.outputs.exists == 'false')) &&
+          (steps.publish_trusted.outcome == 'failure' || steps.publish_trusted.outcome == 'cancelled') &&
+          secrets.PYPI_API_TOKEN
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          echo "Trusted publishing failed, using API token as fallback"
+          python -m pip install --upgrade twine
+          python -m twine upload dist/*
 
