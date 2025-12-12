@@ -13,7 +13,8 @@
 """
 
 import requests
-from .constants import STANDART_HEADERS
+from .constants import STANDART_HEADERS, AddressType
+
 
 def get_token_sync(url="https://fias.nalog.ru/"):
     """Получить токен аутентификации из сервиса ФИАС.
@@ -50,11 +51,12 @@ class SyncFPA:
     def __init__(self, token: str):
         self.token = token
 
-    def details(self, object_id: int):
+    def details_by_id(self, object_id: int, address_type: int | AddressType = 2):
         """Получить детальную информацию об адресном объекте по его ID.
 
         Args:
             object_id (int): ID объекта ФИАС
+            address_type (int | AddressType): Тип адреса (по умолчанию 2)
 
         Returns:
             dict: Детальная информация об адресном объекте
@@ -64,11 +66,32 @@ class SyncFPA:
         """
         response = requests.get(
             "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemById",
-            params={"object_id": object_id, "address_type": 2},
+            params={"object_id": object_id, "address_type": address_type},
             headers=STANDART_HEADERS(self.token),
         )
         response.raise_for_status()
         return response.json()
+
+    def details_by_guid(self, guid: str, address_type: int | AddressType = 2):
+        """Получить детальную информацию об адресном объекте по его GUID.
+        Args:
+            guid (str): GUID объекта ФИАС
+            address_type (int | AddressType): Тип адреса (по умолчанию 2)
+
+        Returns:
+            dict: Детальная информация об адресном объекте
+        """
+        response = requests.get(
+            "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemByGuid",
+            params={"guid": guid, "address_type": address_type},
+            headers=STANDART_HEADERS(self.token),
+        )
+        response.raise_for_status()
+        return response.json()
+
+    def details(self, object_id: int, address_type: int | AddressType = 2):
+        print("details устарел, используйте details_by_id вместо этого")
+        return self.details_by_id(object_id, address_type)
 
     def search(
         self,

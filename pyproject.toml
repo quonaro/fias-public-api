@@ -1,13 +1,11 @@
 [project]
 name = "fias-public-api"
-version = "1.2.0"
+version = "1.5.0"
 description = "Python client for FIAS Public API - Russian address database"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
-authors = [
-    {name = "quonaro", email = "quonaro@mail.ru"}
-]
+license = { text = "MIT" }
+authors = [{ name = "quonaro", email = "quonaro@mail.ru" }]
 keywords = ["fias", "russia", "address", "api", "nalog"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -19,10 +17,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
 ]
-dependencies = [
-    "httpx>=0.28.1",
-    "requests>=2.32.5",
-]
+dependencies = ["httpx>=0.28.1", "requests>=2.32.5"]
 
 [project.urls]
 Homepage = "https://github.com/quonaro/fias-public-api"
@@ -39,3 +34,7 @@ packages = ["fias_public_api"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
+
+[tool.uv]
+
+dev-dependencies = ["pytest", "ruff", "pytest-asyncio"]

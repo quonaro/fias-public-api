@@ -1,0 +1,28 @@
+
+@function clean():
+    echo "Cleaning up..."
+    rm -rfv .pytest_cache .venv
+    find . -name "__pycache__" -type d -exec rm -r {} +
+    echo "Cleaned down"
+
+test:
+    > desc: Тестирование библиотеки
+
+    all:
+        > script: |
+            test:async
+            test:sync
+    async:
+        
+        > script: |
+            echo "Start Async functions"
+            uv run pytest tests/test_fias_async.py
+
+    sync:
+        > script: |
+            echo "Start Sync functions"
+            uv run pytest tests/test_fias_sync.py
+
+    > before: uv sync
+    > after[hide]: clean
+    > fallback: echo "Failed to test"

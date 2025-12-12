@@ -16,7 +16,7 @@
 """
 
 import httpx
-from .constants import STANDART_HEADERS
+from .constants import STANDART_HEADERS, AddressType
 
 async def get_token_async(url="https://fias.nalog.ru/"):
     """Получить токен аутентификации из сервиса ФИАС.
@@ -72,11 +72,12 @@ class AsyncFPA:
             self._client = httpx.AsyncClient()
         return self._client
 
-    async def details(self, object_id: int):
+    async def details_by_id(self, object_id: int, address_type: int | AddressType = 2):
         """Получить детальную информацию об адресном объекте по его ID.
 
         Args:
             object_id (int): ID объекта ФИАС
+            address_type (int | AddressType): Тип адреса (по умолчанию 2)
 
         Returns:
             dict: Детальная информация об адресном объекте
@@ -86,11 +87,32 @@ class AsyncFPA:
         """
         response = await self.client.get(
             "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemById",
-            params={"object_id": object_id, "address_type": 2},
+            params={"object_id": object_id, "address_type": address_type},
             headers=STANDART_HEADERS(self.token),
         )
         response.raise_for_status()
         return response.json()
+
+    async def details_by_guid(self, guid: str, address_type: int | AddressType = 2):
+        """Получить детальную информацию об адресном объекте по его GUID.
+        Args:
+            guid (str): GUID объекта ФИАС
+            address_type (int | AddressType): Тип адреса (по умолчанию 2)
+
+        Returns:
+            dict: Детальная информация об адресном объекте
+        """
+        response = await self.client.get(
+            "https://fias-public-service.nalog.ru/api/spas/v2.0/GetAddressItemByGuid",
+            params={"guid": guid, "address_type": address_type},
+            headers=STANDART_HEADERS(self.token),
+        )
+        response.raise_for_status()
+        return response.json()
+
+    async def details(self, object_id: int, address_type: int | AddressType = 2):
+        print("details устарел, используйте details_by_id вместо этого")
+        return await self.details_by_id(object_id, address_type)
 
     async def search(
         self,

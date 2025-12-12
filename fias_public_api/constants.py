@@ -1,3 +1,6 @@
+from enum import IntEnum
+
+
 def STANDART_HEADERS(token):
     """Создать стандартные заголовки для HTTP запросов к API ФИАС.
 
@@ -12,3 +15,12 @@ def STANDART_HEADERS(token):
         "master-token": token,
         "Content-Type": "application/json",
     }
+
+class AddressType(IntEnum):
+    """Типы адресов в системе ФИАС.
+    ADMINISTRATIVE - Административный тип
+    MUNICIPALITY - Муниципальный тип
+    """
+
+    ADMINISTRATIVE = 1
+    MUNICIPALITY = 2

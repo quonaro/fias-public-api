@@ -4,7 +4,10 @@ __pycache__/
 *$py.class
 
 uv.lock
-
+**/.venv/
+.venv/
+venv/
+**/venv/
 # C extensions
 *.so
 
