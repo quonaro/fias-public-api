@@ -2,7 +2,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![PyPI](https://img.shields.io/badge/PyPI-Не%20опубликовано-red.svg)](https://pypi.org/project/fias-public-api/)
+[![PyPI](https://img.shields.io/pypi/v/fias-public-api.svg)](https://pypi.org/project/fias-public-api/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/fias-public-api.svg)](https://pypi.org/project/fias-public-api/)
 
 > 🚀 **Простой и удобный Python клиент для работы с публичным API ФИАС (Федеральная информационная адресная система)**
 
@@ -17,10 +18,10 @@
 
 ## 📊 Статистика проекта
 
-![GitHub stars](https://img.shields.io/github/stars/invoxy/fias-public-api?style=social)
-![GitHub forks](https://img.shields.io/github/forks/invoxy/fias-public-api?style=social)
-![GitHub issues](https://img.shields.io/github/issues/invoxy/fias-public-api)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/invoxy/fias-public-api)
+![GitHub stars](https://img.shields.io/github/stars/quonaro/fias-public-api?style=social)
+![GitHub forks](https://img.shields.io/github/forks/quonaro/fias-public-api?style=social)
+![GitHub issues](https://img.shields.io/github/issues/quonaro/fias-public-api)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/quonaro/fias-public-api)
 
 ## 🚀 Быстрый старт
 
@@ -41,7 +42,7 @@ print(f"Найдено: {len(results)} результатов")
 
 # Получаем детали первого результата
 if results:
-    details = api.details(results[0]['id'])
+    details = api.details_by_id(results[0]['id'])
     print(f"Адрес: {details.get('address', 'N/A')}")
 ```
 
@@ -63,7 +64,7 @@ async def main():
         
         # Получаем детали первого результата
         if results:
-            details = await api.details(results[0]['id'])
+            details = await api.details_by_id(results[0]['id'])
             print(f"Адрес: {details.get('address', 'N/A')}")
 
 asyncio.run(main())
@@ -71,8 +72,16 @@ asyncio.run(main())
 
 ## 📦 Установка
 
+### Установка из PyPI (рекомендуется)
+
 ```bash
-pip install git+https://github.com/invoxy/fias-public-api
+pip install fias-public-api
+```
+
+### Установка из GitHub
+
+```bash
+pip install git+https://github.com/quonaro/fias-public-api
 ```
 
 ### Зависимости
@@ -80,7 +89,7 @@ pip install git+https://github.com/invoxy/fias-public-api
 | Пакет      | Версия     | Описание                              |
 | ---------- | ---------- | ------------------------------------- |
 | `requests` | `>=2.32.5` | HTTP библиотека для API запросов      |
-| `httpx`    | `>=0.25.0` | Асинхронная HTTP библиотека           |
+| `httpx`    | `>=0.28.1` | Асинхронная HTTP библиотека           |
 
 ## 🔧 Использование
 
@@ -106,9 +115,15 @@ for result in results:
 #### 2. Получение деталей объекта
 
 ```python
+from fias_public_api import AddressType
+
 # Получаем детали по ID
 object_id = 12345
-details = api.details(object_id)
+details = api.details_by_id(object_id, address_type=AddressType.MUNICIPALITY)
+
+# Получаем детали по GUID
+object_guid = "some-guid-string"
+details = api.details_by_guid(object_guid, address_type=AddressType.ADMINISTRATIVE)
 
 # Анализируем структуру ответа
 print("Доступные поля:")
@@ -116,6 +131,8 @@ for key, value in details.items():
     if isinstance(value, (str, int, float, bool)) and value:
         print(f"  {key}: {value}")
 ```
+
+**Примечание:** Метод `details()` устарел и будет удален в будущих версиях. Используйте `details_by_id()` или `details_by_guid()`.
 
 #### 3. Обработка ошибок
 
@@ -179,14 +196,29 @@ SyncFPA(token: str)
 ]
 ```
 
-###### `details(object_id: int) -> Dict`
+###### `details_by_id(object_id: int, address_type: int | AddressType = 2) -> Dict`
 
-Получить детальную информацию об адресном объекте.
+Получить детальную информацию об адресном объекте по его ID.
 
 **Параметры:**
 - `object_id` (int) - ID объекта ФИАС
+- `address_type` (int | AddressType) - Тип адреса (по умолчанию 2 - MUNICIPALITY)
 
 **Возвращает:** Словарь с детальной информацией об объекте
+
+###### `details_by_guid(object_guid: str, address_type: int | AddressType = 2) -> Dict`
+
+Получить детальную информацию об адресном объекте по его GUID.
+
+**Параметры:**
+- `object_guid` (str) - GUID объекта ФИАС
+- `address_type` (int | AddressType) - Тип адреса (по умолчанию 2 - MUNICIPALITY)
+
+**Возвращает:** Словарь с детальной информацией об объекте
+
+###### `details(object_id: int, address_type: int | AddressType = 2) -> Dict` ⚠️ Устарело
+
+**Устаревший метод.** Используйте `details_by_id()` вместо этого. Будет удален в будущих версиях.
 
 ### Асинхронные классы
 
@@ -214,7 +246,9 @@ async with AsyncFPA(token) as api:
 
 Те же методы, что и у `SyncFPA`, но с поддержкой `async`/`await`:
 - `async search(search_string: str, url: str = None) -> List[Dict]`
-- `async details(object_id: int) -> Dict`
+- `async details_by_id(object_id: int, address_type: int | AddressType = 2) -> Dict`
+- `async details_by_guid(object_guid: str, address_type: int | AddressType = 2) -> Dict`
+- `async details(object_id: int, address_type: int | AddressType = 2) -> Dict` ⚠️ Устарело
 
 ### Функции
 
@@ -252,6 +286,14 @@ async with AsyncFPA(token) as api:
 - `token` (str) - Токен аутентификации
 
 **Возвращает:** Словарь с заголовками для HTTP запросов
+
+#### `AddressType` (Enum)
+
+Перечисление типов адресов в системе ФИАС.
+
+**Значения:**
+- `AddressType.ADMINISTRATIVE = 1` - Административный тип
+- `AddressType.MUNICIPALITY = 2` - Муниципальный тип (по умолчанию)
 
 ## 💡 Примеры
 
@@ -291,7 +333,7 @@ def get_address_hierarchy(address_id: int):
     api = SyncFPA(get_token_sync())
 
     try:
-        details = api.details(address_id)
+        details = api.details_by_id(address_id)
 
         print("🏠 Иерархия адреса:")
         print(f"  Уровень: {details.get('level', 'N/A')}")
