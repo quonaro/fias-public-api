@@ -1,10 +1,6 @@
 [project]
 name = "fias-public-api"
-<<<<<<< HEAD
 version = "1.0.2"
-=======
-version = "1.0.2"
->>>>>>> 565e88fb91be101d08a9c4229d6aca458ad353e7
 description = "Python client for FIAS Public API - Russian address database"
 readme = "README.md"
 requires-python = ">=3.12"
