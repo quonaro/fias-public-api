@@ -8,7 +8,7 @@ This example shows how to handle various errors:
 - Using retry decorator
 """
 
-from fias_public_api import get_token_sync, SyncFPA, retry_on_error
+from fias_public_api import get_token_sync, SyncFPA, retry_on_error, AddressType
 from requests.exceptions import ConnectionError, HTTPError, RequestException
 
 
@@ -19,8 +19,8 @@ def main():
     print("1️⃣ Basic error handling...")
     try:
         token = get_token_sync()
-        api = SyncFPA(token)
-        
+        api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
+
         # This might fail if address doesn't exist
         results = api.search_address_items("NonExistentAddress12345")
         print("✅ Request successful")
@@ -40,16 +40,16 @@ def main():
 
     # Example 2: Using retry decorator
     print("\n2️⃣ Using retry decorator for error handling...")
-    
+
     @retry_on_error(max_retries=3, delay=0.5)
     def safe_search(api: SyncFPA, query: str):
         """Search with automatic retry on errors."""
         return api.search_address_items(query)
-    
+
     try:
         token = get_token_sync()
-        api = SyncFPA(token)
-        
+        api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
+
         results = safe_search(api, "Москва")
         print(f"✅ Search successful: {len(results.get('addresses', []))} results")
     except Exception as e:
@@ -59,10 +59,10 @@ def main():
     print("\n3️⃣ Handling specific error codes...")
     try:
         token = get_token_sync()
-        api = SyncFPA(token)
-        
+        api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
+
         # Try to get details for invalid ID
-        details = api.details_by_id(object_id=999999999)
+        api.details_by_id(object_id=999999999)
         print("✅ Details retrieved")
     except HTTPError as e:
         status_code = e.response.status_code
@@ -79,39 +79,39 @@ def main():
 
     # Example 4: Wrapping multiple operations
     print("\n4️⃣ Wrapping multiple operations with error handling...")
-    
+
     def safe_operations(api: SyncFPA):
         """Perform multiple operations with error handling."""
         results = []
-        
+
         # Operation 1: Get regions
         try:
-            regions = api.get_regions()
+            api.get_regions()
             results.append(("Get regions", "✅ Success"))
         except Exception as e:
             results.append(("Get regions", f"❌ Error: {e}"))
-        
+
         # Operation 2: Search
         try:
             search_results = api.search("Москва")
             results.append(("Search", f"✅ Found {len(search_results)} results"))
         except Exception as e:
             results.append(("Search", f"❌ Error: {e}"))
-        
+
         # Operation 3: Get types
         try:
             types = api.get_fias_object_types()
-            type_count = len(types.get('types', []))
+            type_count = len(types.get("types", []))
             results.append(("Get types", f"✅ Found {type_count} types"))
         except Exception as e:
             results.append(("Get types", f"❌ Error: {e}"))
-        
+
         return results
-    
+
     try:
         token = get_token_sync()
-        api = SyncFPA(token)
-        
+        api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
+
         results = safe_operations(api)
         print("\n📋 Operation results:")
         for operation, status in results:
@@ -122,4 +122,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

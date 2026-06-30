@@ -49,7 +49,7 @@ class TestAsyncFPA:
     @pytest.fixture
     def api(self):
         """Create AsyncFPA instance for testing."""
-        return AsyncFPA(token="test-token")
+        return AsyncFPA(token="test-token", address_type=AddressType.MUNICIPALITY)
 
     @pytest.fixture
     def api_with_address_type(self):
@@ -62,7 +62,7 @@ class TestAsyncFPA:
         mock_response = Mock()
         mock_response.json.return_value = {"addresses": []}
         mock_response.raise_for_status = Mock()
-        
+
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_response)
         api._client = mock_client
@@ -77,15 +77,12 @@ class TestAsyncFPA:
         mock_response = Mock()
         mock_response.json.return_value = {"addresses": []}
         mock_response.raise_for_status = Mock()
-        
+
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
         api._client = mock_client
 
-        result = await api.get_address_items(
-            path="test-path",
-            address_level=1
-        )
+        result = await api.get_address_items(path="test-path", address_level=1)
         assert result == {"addresses": []}
         mock_client.post.assert_called_once()
 
@@ -95,7 +92,7 @@ class TestAsyncFPA:
         mock_response = Mock()
         mock_response.json.return_value = {"address_details": {}}
         mock_response.raise_for_status = Mock()
-        
+
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_response)
         api._client = mock_client
@@ -110,7 +107,7 @@ class TestAsyncFPA:
         mock_response = Mock()
         mock_response.json.return_value = {"addresses": []}
         mock_response.raise_for_status = Mock()
-        
+
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_response)
         api_with_address_type._client = mock_client
@@ -127,7 +124,7 @@ class TestAsyncFPA:
         mock_response = Mock()
         mock_response.json.return_value = {"hints": [{"id": 1}]}
         mock_response.raise_for_status = Mock()
-        
+
         mock_client = AsyncMock()
         mock_client.get = AsyncMock(return_value=mock_response)
         api._client = mock_client
@@ -139,12 +136,12 @@ class TestAsyncFPA:
     @pytest.mark.asyncio
     async def test_context_manager(self):
         """Test async context manager."""
-        api = AsyncFPA(token="test-token")
-        
+        api = AsyncFPA(token="test-token", address_type=AddressType.MUNICIPALITY)
+
         async with api:
             assert api._client is not None
             assert api.client is not None
-        
+
         # After context exit, client should be closed
         assert api._client is None
 
@@ -154,5 +151,7 @@ class TestAsyncFPA:
 
     def test_get_address_type_custom(self, api):
         """Test _get_address_type with custom value."""
-        assert api._get_address_type(AddressType.ADMINISTRATIVE) == AddressType.ADMINISTRATIVE
-
+        assert (
+            api._get_address_type(AddressType.ADMINISTRATIVE)
+            == AddressType.ADMINISTRATIVE
+        )

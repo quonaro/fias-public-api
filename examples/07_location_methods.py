@@ -10,7 +10,7 @@ from fias_public_api import get_token_sync, SyncFPA, AddressType
 def main():
     # Get token and create client
     token = get_token_sync()
-    api = SyncFPA(token)
+    api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
 
     print("🌍 Location Methods Examples\n")
 
@@ -20,9 +20,9 @@ def main():
         # Using Google DNS IP as example
         ip_address = "8.8.8.8"
         results = api.get_location_by_ip(ip=ip_address)
-        addresses = results.get('addresses', [])
+        addresses = results.get("addresses", [])
         print(f"✅ Found {len(addresses)} addresses for IP {ip_address}")
-        
+
         if addresses:
             print("\n📋 Location information:")
             for i, addr in enumerate(addresses[:3], 1):
@@ -37,10 +37,9 @@ def main():
     try:
         ip_address = "8.8.8.8"
         results = api.get_location_by_ip(
-            ip=ip_address,
-            address_type=AddressType.ADMINISTRATIVE
+            ip=ip_address, address_type=AddressType.ADMINISTRATIVE
         )
-        addresses = results.get('addresses', [])
+        addresses = results.get("addresses", [])
         print(f"✅ Found {len(addresses)} addresses (administrative type)")
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -48,17 +47,17 @@ def main():
     # Example 3: Get location for different IPs
     print("\n3️⃣ Getting locations for multiple IPs...")
     test_ips = [
-        "8.8.8.8",      # Google DNS
-        "1.1.1.1",      # Cloudflare DNS
-        "77.88.8.8",   # Yandex DNS (Russia)
+        "8.8.8.8",  # Google DNS
+        "1.1.1.1",  # Cloudflare DNS
+        "77.88.8.8",  # Yandex DNS (Russia)
     ]
-    
+
     for ip in test_ips:
         try:
             results = api.get_location_by_ip(ip=ip)
-            addresses = results.get('addresses', [])
+            addresses = results.get("addresses", [])
             if addresses:
-                location = addresses[0].get('full_name', 'N/A')
+                location = addresses[0].get("full_name", "N/A")
                 print(f"   {ip} -> {location}")
             else:
                 print(f"   {ip} -> Location not found")
@@ -68,4 +67,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

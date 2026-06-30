@@ -28,7 +28,6 @@ SEARCH_ADDRESS_ITEM = f"{BASE_URL}/SearchAddressItem"
 GET_LOCATION_BY_IP = f"{BASE_URL}/GetLocationByIP"
 
 # Default exceptions for retry decorator
-# Note: First request to FIAS API often returns 500 error or ConnectionResetError
 DEFAULT_RETRY_EXCEPTIONS = (
     Exception,  # Catch all exceptions by default
 )
@@ -39,7 +38,7 @@ SYNC_RETRY_EXCEPTIONS = (
     OSError,
 )
 
-# Async-specific exceptions  
+# Async-specific exceptions
 ASYNC_RETRY_EXCEPTIONS = (
     ConnectionResetError,
     OSError,
@@ -83,9 +82,6 @@ def retry_on_error(
     exceptions: tuple | None = None,
 ):
     """Декоратор для повторных попыток при ошибках.
-    
-    Примечание: Первый запрос к API ФИАС часто возвращает 500 ошибку или ConnectionResetError,
-    поэтому декоратор автоматически повторяет запрос при возникновении ошибок.
 
     Args:
         max_retries (int): Максимальное количество попыток (по умолчанию 3)
@@ -102,6 +98,7 @@ def retry_on_error(
 
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         if inspect.iscoroutinefunction(func):
+
             @wraps(func)
             async def async_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 import asyncio
@@ -125,6 +122,7 @@ def retry_on_error(
 
             return async_wrapper
         else:
+
             @wraps(func)
             def sync_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
                 current_delay = delay

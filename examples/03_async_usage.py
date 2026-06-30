@@ -8,7 +8,7 @@ This example demonstrates:
 """
 
 import asyncio
-from fias_public_api import get_token_async, AsyncFPA
+from fias_public_api import get_token_async, AsyncFPA, AddressType
 
 
 async def search_address(api: AsyncFPA, query: str):
@@ -17,7 +17,7 @@ async def search_address(api: AsyncFPA, query: str):
     return {
         "query": query,
         "count": len(results),
-        "results": results[:3]  # First 3 results
+        "results": results[:3],  # First 3 results
     }
 
 
@@ -29,7 +29,7 @@ async def main():
 
     # Step 2: Create async API client using context manager
     print("\n📦 Creating async API client...")
-    async with AsyncFPA(token) as api:
+    async with AsyncFPA(token, address_type=AddressType.MUNICIPALITY) as api:
         print("✅ Client created")
 
         # Step 3: Single async request
@@ -39,12 +39,7 @@ async def main():
 
         # Step 4: Concurrent requests
         print("\n🔍 Performing concurrent searches...")
-        queries = [
-            "Москва",
-            "Санкт-Петербург",
-            "Казань",
-            "Новосибирск"
-        ]
+        queries = ["Москва", "Санкт-Петербург", "Казань", "Новосибирск"]
 
         tasks = [search_address(api, query) for query in queries]
         results = await asyncio.gather(*tasks)
@@ -52,10 +47,11 @@ async def main():
         print("\n📋 Concurrent search results:")
         for result in results:
             print(f"  {result['query']}: {result['count']} results")
-            if result['results']:
-                print(f"    First result: {result['results'][0].get('full_name', 'N/A')}")
+            if result["results"]:
+                print(
+                    f"    First result: {result['results'][0].get('full_name', 'N/A')}"
+                )
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-

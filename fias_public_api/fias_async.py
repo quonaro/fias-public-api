@@ -35,6 +35,7 @@ from .constants import (
     GET_LOCATION_BY_IP,
 )
 
+
 async def get_token_async(url="https://fias.nalog.ru/"):
     """Получить токен аутентификации из сервиса ФИАС.
 
@@ -64,10 +65,10 @@ class AsyncFPA:
 
     Args:
         token (str): Токен аутентификации для доступа к API
-        address_type (int | AddressType, optional): Тип адреса по умолчанию (по умолчанию 2 - MUNICIPALITY)
+        address_type (int | AddressType): Тип адреса
     """
 
-    def __init__(self, token: str, address_type: int | AddressType = 2):
+    def __init__(self, token: str, address_type: int | AddressType):
         self.token = token
         self.address_type = address_type
         self._client = None
@@ -357,7 +358,7 @@ class AsyncFPA:
         """
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
-        
+
         params = {"search_string": search_string}
         if address_type is not None:
             params["address_type"] = self._get_address_type(address_type)
@@ -445,7 +446,7 @@ class AsyncFPA:
         """
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
-        
+
         params = {"search_string": search_string}
         if address_type is not None:
             params["address_type"] = self._get_address_type(address_type)
@@ -485,7 +486,9 @@ class AsyncFPA:
         response.raise_for_status()
         return response.json()
 
-    async def details(self, object_id: int, address_type: int | AddressType | None = None):
+    async def details(
+        self, object_id: int, address_type: int | AddressType | None = None
+    ):
         """Устаревший метод. Используйте details_by_id вместо этого."""
         print("details устарел, используйте details_by_id вместо этого")
         return await self.details_by_id(object_id, address_type)
@@ -508,5 +511,7 @@ class AsyncFPA:
             ValueError: Если search_string пустая строка
             httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        result = await self.get_address_hint(search_string=search_string, address_type=address_type)
+        result = await self.get_address_hint(
+            search_string=search_string, address_type=address_type
+        )
         return result.get("hints", [])

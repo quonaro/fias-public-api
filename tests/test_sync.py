@@ -8,17 +8,6 @@ from fias_public_api import SyncFPA, get_token_sync, AddressType
 from fias_public_api.constants import (
     GET_REGIONS,
     GET_ADDRESS_ITEMS,
-    GET_DETAILS,
-    IS_DESCENDANT,
-    HAS_DESCENDANTS,
-    GET_ADDRESS_ITEM_BY_ID,
-    GET_ADDRESS_ITEM_BY_GUID,
-    GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
-    GET_FIAS_OBJECT_TYPES,
-    SEARCH_ADDRESS_ITEMS,
-    GET_ADDRESS_HINT,
-    SEARCH_ADDRESS_ITEM,
-    GET_LOCATION_BY_IP,
 )
 
 
@@ -54,7 +43,7 @@ class TestSyncFPA:
     @pytest.fixture
     def api(self):
         """Create SyncFPA instance for testing."""
-        return SyncFPA(token="test-token")
+        return SyncFPA(token="test-token", address_type=AddressType.MUNICIPALITY)
 
     @pytest.fixture
     def api_with_address_type(self):
@@ -70,7 +59,7 @@ class TestSyncFPA:
         mock_get.return_value = mock_response
 
         from fias_public_api.constants import STANDART_HEADERS
-        
+
         result = api.get_regions()
         assert result == {"addresses": []}
         mock_get.assert_called_once_with(
@@ -86,9 +75,7 @@ class TestSyncFPA:
         mock_post.return_value = mock_response
 
         result = api.get_address_items(
-            path="test-path",
-            address_level=1,
-            name_part="test"
+            path="test-path", address_level=1, name_part="test"
         )
         assert result == {"addresses": []}
         mock_post.assert_called_once()
@@ -177,7 +164,9 @@ class TestSyncFPA:
         mock_response.raise_for_status = Mock()
         mock_get.return_value = mock_response
 
-        result = api.get_address_item_by_cadastral_number(cadastral_number="123:45:678:90")
+        result = api.get_address_item_by_cadastral_number(
+            cadastral_number="123:45:678:90"
+        )
         assert result == {"addresses": []}
         mock_get.assert_called_once()
 
@@ -228,10 +217,7 @@ class TestSyncFPA:
         mock_response.raise_for_status = Mock()
         mock_post.return_value = mock_response
 
-        result = api.get_address_hint(
-            up_to_level=5,
-            search_non_active=False
-        )
+        result = api.get_address_hint(up_to_level=5, search_non_active=False)
         assert result == {"hints": []}
         mock_post.assert_called_once()
         mock_get.assert_not_called()
@@ -278,6 +264,8 @@ class TestSyncFPA:
 
     def test_get_address_type_custom(self, api):
         """Test _get_address_type with custom value."""
-        assert api._get_address_type(AddressType.ADMINISTRATIVE) == AddressType.ADMINISTRATIVE
+        assert (
+            api._get_address_type(AddressType.ADMINISTRATIVE)
+            == AddressType.ADMINISTRATIVE
+        )
         assert api._get_address_type(1) == 1
-

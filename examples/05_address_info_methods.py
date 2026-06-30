@@ -8,13 +8,13 @@ This example shows various AddressInfo operations:
 - Checking hierarchy relationships
 """
 
-from fias_public_api import get_token_sync, SyncFPA
+from fias_public_api import get_token_sync, SyncFPA, AddressType
 
 
 def main():
     # Get token and create client
     token = get_token_sync()
-    api = SyncFPA(token)
+    api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
 
     print("📍 AddressInfo Methods Examples\n")
 
@@ -22,13 +22,15 @@ def main():
     print("1️⃣ Getting all regions...")
     try:
         regions = api.get_regions()
-        addresses = regions.get('addresses', [])
+        addresses = regions.get("addresses", [])
         print(f"✅ Found {len(addresses)} regions")
-        
+
         if addresses:
             print("\n📋 First 5 regions:")
             for i, region in enumerate(addresses[:5], 1):
-                print(f"   {i}. {region.get('full_name', 'N/A')} (ID: {region.get('object_id', 'N/A')})")
+                print(
+                    f"   {i}. {region.get('full_name', 'N/A')} (ID: {region.get('object_id', 'N/A')})"
+                )
     except Exception as e:
         print(f"❌ Error: {e}")
 
@@ -37,19 +39,19 @@ def main():
     try:
         # Get regions first to use as parent
         regions = api.get_regions()
-        if regions.get('addresses'):
-            first_region = regions['addresses'][0]
-            region_id = first_region.get('object_id')
-            
+        if regions.get("addresses"):
+            first_region = regions["addresses"][0]
             # Get child items for the region
             items = api.get_address_items(
-                path=first_region.get('path'),
+                path=first_region.get("path"),
                 address_level=2,  # District level
-                include_descendants=False
+                include_descendants=False,
             )
-            addresses = items.get('addresses', [])
-            print(f"✅ Found {len(addresses)} items for region {first_region.get('full_name')}")
-            
+            addresses = items.get("addresses", [])
+            print(
+                f"✅ Found {len(addresses)} items for region {first_region.get('full_name')}"
+            )
+
             if addresses:
                 print("\n📋 First 3 items:")
                 for i, item in enumerate(addresses[:3], 1):
@@ -63,9 +65,9 @@ def main():
         # Use a known object ID (Moscow region example)
         object_id = 77  # Moscow region ID (example)
         details = api.get_details(object_id)
-        
-        if 'address_details' in details:
-            addr_details = details['address_details']
+
+        if "address_details" in details:
+            addr_details = details["address_details"]
             print(f"✅ Details retrieved for object {object_id}")
             print(f"   Postal code: {addr_details.get('postal_code', 'N/A')}")
             print(f"   OKATO: {addr_details.get('okato', 'N/A')}")
@@ -77,12 +79,12 @@ def main():
     print("\n4️⃣ Checking hierarchy relationships...")
     try:
         regions = api.get_regions()
-        if len(regions.get('addresses', [])) >= 2:
-            ancestor = regions['addresses'][0].get('object_id')
-            descendant = regions['addresses'][1].get('object_id')
-            
+        if len(regions.get("addresses", [])) >= 2:
+            ancestor = regions["addresses"][0].get("object_id")
+            descendant = regions["addresses"][1].get("object_id")
+
             result = api.is_descendant(ancestor=ancestor, descendant=descendant)
-            is_desc = result.get('check', False)
+            is_desc = result.get("check", False)
             print(f"✅ Is {descendant} descendant of {ancestor}? {is_desc}")
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -91,11 +93,11 @@ def main():
     print("\n5️⃣ Checking if element has descendants...")
     try:
         regions = api.get_regions()
-        if regions.get('addresses'):
-            parent_id = regions['addresses'][0].get('object_id')
-            
+        if regions.get("addresses"):
+            parent_id = regions["addresses"][0].get("object_id")
+
             result = api.has_descendants(parent=parent_id, up_to_level=5)
-            has_desc = result.get('check', False)
+            has_desc = result.get("check", False)
             print(f"✅ Does {parent_id} have descendants up to level 5? {has_desc}")
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -104,17 +106,18 @@ def main():
     print("\n6️⃣ Getting FIAS object types...")
     try:
         types = api.get_fias_object_types()
-        type_list = types.get('types', [])
+        type_list = types.get("types", [])
         print(f"✅ Found {len(type_list)} object types")
-        
+
         if type_list:
             print("\n📋 First 5 types:")
             for i, obj_type in enumerate(type_list[:5], 1):
-                print(f"   {i}. {obj_type.get('type_name', 'N/A')} (Level: {obj_type.get('address_level', 'N/A')})")
+                print(
+                    f"   {i}. {obj_type.get('type_name', 'N/A')} (Level: {obj_type.get('address_level', 'N/A')})"
+                )
     except Exception as e:
         print(f"❌ Error: {e}")
 
 
 if __name__ == "__main__":
     main()
-

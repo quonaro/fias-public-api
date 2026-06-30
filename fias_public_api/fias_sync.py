@@ -61,10 +61,10 @@ class SyncFPA:
 
     Args:
         token (str): Токен аутентификации для доступа к API
-        address_type (int | AddressType, optional): Тип адреса по умолчанию (по умолчанию 2 - MUNICIPALITY)
+        address_type (int | AddressType): Тип адреса
     """
 
-    def __init__(self, token: str, address_type: int | AddressType = 2):
+    def __init__(self, token: str, address_type: int | AddressType):
         self.token = token
         self.address_type = address_type
 
@@ -83,9 +83,7 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = requests.get(
-            GET_REGIONS, headers=STANDART_HEADERS(self.token)
-        )
+        response = requests.get(GET_REGIONS, headers=STANDART_HEADERS(self.token))
         response.raise_for_status()
         return response.json()
 
@@ -336,7 +334,7 @@ class SyncFPA:
         """
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
-        
+
         params = {"search_string": search_string}
         if address_type is not None:
             params["address_type"] = self._get_address_type(address_type)
@@ -424,7 +422,7 @@ class SyncFPA:
         """
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
-        
+
         params = {"search_string": search_string}
         if address_type is not None:
             params["address_type"] = self._get_address_type(address_type)
@@ -487,5 +485,7 @@ class SyncFPA:
             ValueError: Если search_string пустая строка
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        result = self.get_address_hint(search_string=search_string, address_type=address_type)
+        result = self.get_address_hint(
+            search_string=search_string, address_type=address_type
+        )
         return result.get("hints", [])

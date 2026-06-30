@@ -7,13 +7,13 @@ This example shows different search operations:
 - SearchAddressItem - get single address item
 """
 
-from fias_public_api import get_token_sync, SyncFPA
+from fias_public_api import get_token_sync, SyncFPA, AddressType
 
 
 def main():
     # Get token and create client
     token = get_token_sync()
-    api = SyncFPA(token)
+    api = SyncFPA(token, address_type=AddressType.MUNICIPALITY)
 
     print("🔍 Search Methods Examples\n")
 
@@ -21,9 +21,9 @@ def main():
     print("1️⃣ Using search_address_items...")
     try:
         results = api.search_address_items("Москва, Красная площадь")
-        addresses = results.get('addresses', [])
+        addresses = results.get("addresses", [])
         print(f"✅ Found {len(addresses)} addresses")
-        
+
         if addresses:
             print("\n📋 Results:")
             for i, addr in enumerate(addresses[:3], 1):
@@ -37,9 +37,9 @@ def main():
     print("\n2️⃣ Using get_address_hint (GET method)...")
     try:
         results = api.get_address_hint(search_string="Москва")
-        hints = results.get('hints', [])
+        hints = results.get("hints", [])
         print(f"✅ Found {len(hints)} hints")
-        
+
         if hints:
             print("\n📋 First 3 hints:")
             for i, hint in enumerate(hints[:3], 1):
@@ -51,12 +51,9 @@ def main():
     # Example 3: GetAddressHint (POST method)
     print("\n3️⃣ Using get_address_hint (POST method)...")
     try:
-        results = api.get_address_hint(
-            up_to_level=5,
-            search_non_active=False
-        )
-        hints = results.get('hints', [])
-        print(f"✅ Retrieved hints (POST method)")
+        results = api.get_address_hint(up_to_level=5, search_non_active=False)
+        hints = results.get("hints", [])
+        print("✅ Retrieved hints (POST method)")
         print(f"   Found {len(hints)} hints")
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -65,9 +62,9 @@ def main():
     print("\n4️⃣ Using search_address_item (single result)...")
     try:
         result = api.search_address_item("Москва, Красная площадь, 1")
-        
-        if 'object_id' in result:
-            print(f"✅ Found address item")
+
+        if "object_id" in result:
+            print("✅ Found address item")
             print(f"   Object ID: {result.get('object_id', 'N/A')}")
             print(f"   Full name: {result.get('full_name', 'N/A')}")
             print(f"   Path: {result.get('path', 'N/A')}")
@@ -81,7 +78,7 @@ def main():
     try:
         results = api.search("Санкт-Петербург")
         print(f"✅ Found {len(results)} results")
-        
+
         if results:
             print("\n📋 First 3 results:")
             for i, result in enumerate(results[:3], 1):
@@ -92,4 +89,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
