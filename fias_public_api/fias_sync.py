@@ -75,7 +75,7 @@ class SyncFPA:
     def __init__(
         self,
         token: str,
-        address_type: int | AddressType,
+        address_type: int | AddressType | None = None,
         enable_logging: bool = False,
         log_level: int = logging.DEBUG,
     ):
@@ -171,7 +171,9 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = self._make_request("GET", GET_REGIONS, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET", GET_REGIONS, headers=STANDART_HEADERS(self.token)
+        )
         return response.json()
 
     @log_method_call()
@@ -216,7 +218,12 @@ class SyncFPA:
         if include_descendants is not None:
             payload["include_descendants"] = include_descendants
 
-        response = self._make_request("POST", GET_ADDRESS_ITEMS, json=payload, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "POST",
+            GET_ADDRESS_ITEMS,
+            json=payload,
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -232,9 +239,12 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = self._make_request("GET", GET_DETAILS,
+        response = self._make_request(
+            "GET",
+            GET_DETAILS,
             params={"object_id": object_id},
-            headers=STANDART_HEADERS(self.token),)
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -263,7 +273,9 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET", IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token)
+        )
         return response.json()
 
     @log_method_call()
@@ -292,7 +304,9 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET", HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token)
+        )
         return response.json()
 
     @log_method_call()
@@ -317,7 +331,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_ID, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET",
+            GET_ADDRESS_ITEM_BY_ID,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -342,9 +361,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_GUID,
+        response = self._make_request(
+            "GET",
+            GET_ADDRESS_ITEM_BY_GUID,
             params=params,
-            headers=STANDART_HEADERS(self.token),)
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -369,9 +391,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
+        response = self._make_request(
+            "GET",
+            GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
             params=params,
-            headers=STANDART_HEADERS(self.token),)
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -384,7 +409,9 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = self._make_request("GET", GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET", GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token)
+        )
         return response.json()
 
     @log_method_call()
@@ -413,7 +440,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", SEARCH_ADDRESS_ITEMS, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET",
+            SEARCH_ADDRESS_ITEMS,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -452,7 +484,12 @@ class SyncFPA:
             elif self.address_type:
                 params["address_type"] = self.address_type
 
-            response = self._make_request("GET", GET_ADDRESS_HINT, params=params, headers=STANDART_HEADERS(self.token))
+            response = self._make_request(
+                "GET",
+                GET_ADDRESS_HINT,
+                params=params,
+                headers=STANDART_HEADERS(self.token),
+            )
         else:
             # POST request
             payload = {"searchNonActive": search_non_active}
@@ -465,7 +502,12 @@ class SyncFPA:
             if locations_boost is not None:
                 payload["locationsBoost"] = locations_boost
 
-            response = self._make_request("POST", GET_ADDRESS_HINT, json=payload, headers=STANDART_HEADERS(self.token))
+            response = self._make_request(
+                "POST",
+                GET_ADDRESS_HINT,
+                json=payload,
+                headers=STANDART_HEADERS(self.token),
+            )
         return response.json()
 
     @log_method_call()
@@ -494,7 +536,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", SEARCH_ADDRESS_ITEM, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET",
+            SEARCH_ADDRESS_ITEM,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()
@@ -519,7 +566,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = self._make_request("GET", GET_LOCATION_BY_IP, params=params, headers=STANDART_HEADERS(self.token))
+        response = self._make_request(
+            "GET",
+            GET_LOCATION_BY_IP,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
+        )
         return response.json()
 
     @log_method_call()

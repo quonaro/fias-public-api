@@ -78,7 +78,7 @@ class AsyncFPA:
     def __init__(
         self,
         token: str,
-        address_type: int | AddressType,
+        address_type: int | AddressType | None = None,
         enable_logging: bool = False,
         log_level: int = logging.DEBUG,
     ):
