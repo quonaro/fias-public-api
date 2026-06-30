@@ -1,8 +1,8 @@
-# Клиент ФИАС Public API на Python
+# 🏠 Клиент ФИАС Public API на Python
 
 Python-клиент для ФИАС Public API — федеральной информационной адресной системы Российской Федерации. Поддерживает синхронные и асинхронные операции.
 
-## Установка
+## 📦 Установка
 
 ### Установка из PyPI (рекомендуется)
 
@@ -16,14 +16,14 @@ pip install fias-public-api
 pip install git+https://github.com/quonaro/fias-public-api
 ```
 
-### Зависимости
+## 🔌 Зависимости
 
 | Пакет      | Версия     | Описание                       |
 | ---------- | ---------- | ------------------------------ |
 | `requests` | `>=2.32.5` | HTTP библиотека для API запросов |
 | `httpx`    | `>=0.28.1` | Асинхронная HTTP библиотека    |
 
-## Быстрый старт
+## 🚀 Быстрый старт
 
 ### Синхронный пример
 
@@ -66,9 +66,9 @@ async def main():
 asyncio.run(main())
 ```
 
-## Примеры использования
+## 📋 Примеры использования
 
-### Поиск адресов
+### 🔍 Поиск адресов
 
 ```python
 # Простой поиск
@@ -84,21 +84,85 @@ for result in results:
     print(f"Тип: {result['type']}")
 ```
 
-### Получение деталей объекта
+### 🗺️ Получить список регионов
+
+```python
+regions = api.get_regions()
+for region in regions:
+    print(region['name'])
+```
+
+### 🆔 Детали по ID
 
 ```python
 from fias_public_api import AddressType
 
-# По ID
 object_id = 12345
 details = api.details_by_id(object_id, address_type=AddressType.MUNICIPALITY)
+```
 
-# По GUID
+### 🧬 Детали по GUID
+
+```python
 object_guid = "some-guid-string"
 details = api.details_by_guid(object_guid, address_type=AddressType.ADMINISTRATIVE)
 ```
 
-### Обработка ошибок
+### 📍 Местоположение по IP
+
+```python
+location = api.get_location_by_ip("8.8.8.8")
+print(location)
+```
+
+### 🛠️ Фильтрация адресных объектов
+
+```python
+items = api.get_address_items(
+    path="7700000000000",
+    address_level=7,
+    name_part="Тверская"
+)
+```
+
+### 💡 Подсказки по адресу
+
+```python
+hints = api.get_address_hint(
+    search_string="Москва",
+    up_to_level=5
+)
+```
+
+### ⚙️ Опции клиента
+
+```python
+from fias_public_api import AddressType
+
+api = SyncFPA(
+    token,
+    url="https://custom-fias.ru/api",
+    address_type=AddressType.ADMINISTRATIVE
+)
+```
+
+### 🔄 Retry-декоратор
+
+```python
+from fias_public_api import retry_on_error
+from requests.exceptions import ConnectionError, HTTPError
+
+@retry_on_error(
+    max_retries=5,
+    delay=1.0,
+    backoff=2.0,
+    exceptions=(ConnectionError, HTTPError)
+)
+def search_with_retry(search_string):
+    return api.search_address_items(search_string)
+```
+
+### 🔄 Обработка ошибок
 
 ```python
 from requests.exceptions import HTTPError, RequestException
@@ -116,23 +180,7 @@ except RequestException as e:
     print(f"Ошибка сети: {e}")
 ```
 
-### Retry-декоратор
-
-```python
-from fias_public_api import retry_on_error
-from requests.exceptions import ConnectionError, HTTPError
-
-@retry_on_error(
-    max_retries=5,
-    delay=1.0,
-    backoff=2.0,
-    exceptions=(ConnectionError, HTTPError)
-)
-def search_with_retry(search_string):
-    return api.search_address_items(search_string)
-```
-
-## Методы API
+## 📚 Методы API
 
 ### Синхронные методы (`SyncFPA`)
 
@@ -163,7 +211,7 @@ def search_with_retry(search_string):
 - `AddressType` — перечисление типов адресов (`ADMINISTRATIVE = 1`, `MUNICIPALITY = 2`)
 - `retry_on_error(...)` — декоратор для повторных попыток при ошибках
 
-## Примеры из папки examples
+## 📁 Примеры из папки examples
 
 Все примеры доступны в папке [`examples/`](examples/):
 
@@ -176,7 +224,7 @@ def search_with_retry(search_string):
 - **07_location_methods.py** — определение локации по IP
 - **08_error_handling.py** — обработка ошибок
 
-## Тестирование
+## 🧪 Тестирование
 
 ```bash
 # Установка зависимостей для разработки
@@ -192,11 +240,11 @@ pytest -vv
 pytest tests/test_sync.py::TestSyncFPA::test_get_regions
 ```
 
-## Лицензия
+## 📄 Лицензия
 
 MIT. Подробности см. в файле [LICENSE](LICENSE).
 
-## Полезные ссылки
+## 🔗 Полезные ссылки
 
 - [PyPI Package](https://pypi.org/project/fias-public-api/)
 - [Официальный сайт ФИАС](https://fias.nalog.ru/)

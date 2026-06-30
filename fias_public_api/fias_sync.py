@@ -12,6 +12,10 @@
     >>> details = api.details(12345)
 """
 
+import json
+import logging
+import sys
+import time
 import requests
 from .constants import (
     STANDART_HEADERS,
@@ -30,6 +34,10 @@ from .constants import (
     GET_ADDRESS_HINT,
     SEARCH_ADDRESS_ITEM,
     GET_LOCATION_BY_IP,
+    log_method_call,
+    JsonFormatter,
+    _safe_headers,
+    _truncate_body,
 )
 
 
@@ -64,9 +72,23 @@ class SyncFPA:
         address_type (int | AddressType): Тип адреса
     """
 
-    def __init__(self, token: str, address_type: int | AddressType):
+    def __init__(
+        self,
+        token: str,
+        address_type: int | AddressType,
+        enable_logging: bool = False,
+        log_level: int = logging.DEBUG,
+    ):
         self.token = token
         self.address_type = address_type
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(logging.NullHandler())
+        if enable_logging:
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(log_level)
+            handler.setFormatter(JsonFormatter())
+            self._logger.setLevel(log_level)
+            self._logger.addHandler(handler)
 
     def _get_address_type(self, address_type: int | AddressType | None) -> int:
         """Получить тип адреса, используя значение по умолчанию из конструктора если не указано."""
@@ -74,6 +96,72 @@ class SyncFPA:
             return self.address_type
         return int(address_type)
 
+    def _log_request(self, method, url, headers, params, body):
+        if self._logger.isEnabledFor(logging.DEBUG):
+            record = self._logger.makeRecord(
+                self._logger.name,
+                logging.DEBUG,
+                "",
+                0,
+                "http request",
+                (),
+                None,
+            )
+            record.data = {
+                "method": method,
+                "url": url,
+                "headers": _safe_headers(headers),
+                "params": params,
+                "body": _truncate_body(body),
+            }
+            self._logger.handle(record)
+
+    def _log_response(self, method, url, status, resp_headers, body, duration_ms):
+        if self._logger.isEnabledFor(logging.DEBUG):
+            record = self._logger.makeRecord(
+                self._logger.name,
+                logging.DEBUG,
+                "",
+                0,
+                "http response",
+                (),
+                None,
+            )
+            record.data = {
+                "method": method,
+                "url": url,
+                "status": status,
+                "headers": dict(resp_headers) if resp_headers else {},
+                "body": _truncate_body(body),
+                "duration": f"{duration_ms:.3f}ms",
+            }
+            self._logger.handle(record)
+
+    def _make_request(self, method, url, **kwargs):
+        start = time.time()
+        headers = kwargs.pop("headers", {})
+        params = kwargs.pop("params", None)
+        json_payload = kwargs.pop("json", None)
+        body = json.dumps(json_payload) if json_payload else ""
+
+        self._log_request(method.upper(), url, headers, params, body)
+
+        response = requests.request(
+            method, url, headers=headers, params=params, json=json_payload, **kwargs
+        )
+
+        duration_ms = (time.time() - start) * 1000
+        self._log_response(
+            method.upper(),
+            url,
+            response.status_code,
+            response.headers,
+            response.text,
+            duration_ms,
+        )
+        return response
+
+    @log_method_call()
     def get_regions(self):
         """Получить список регионов.
 
@@ -83,10 +171,10 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = requests.get(GET_REGIONS, headers=STANDART_HEADERS(self.token))
-        response.raise_for_status()
+        response = self._make_request("GET", GET_REGIONS, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def get_address_items(
         self,
         path: str | None = None,
@@ -128,12 +216,10 @@ class SyncFPA:
         if include_descendants is not None:
             payload["include_descendants"] = include_descendants
 
-        response = requests.post(
-            GET_ADDRESS_ITEMS, json=payload, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("POST", GET_ADDRESS_ITEMS, json=payload, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def get_details(self, object_id: int):
         """Получить дополнительную информацию для заданного адресного элемента.
 
@@ -146,14 +232,12 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = requests.get(
-            GET_DETAILS,
+        response = self._make_request("GET", GET_DETAILS,
             params={"object_id": object_id},
-            headers=STANDART_HEADERS(self.token),
-        )
-        response.raise_for_status()
+            headers=STANDART_HEADERS(self.token),)
         return response.json()
 
+    @log_method_call()
     def is_descendant(
         self,
         ancestor: int,
@@ -179,12 +263,10 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def has_descendants(
         self,
         parent: int,
@@ -210,12 +292,10 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def details_by_id(
         self, object_id: int, address_type: int | AddressType | None = None
     ):
@@ -237,12 +317,10 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            GET_ADDRESS_ITEM_BY_ID, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_ID, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def details_by_guid(
         self, object_guid: str, address_type: int | AddressType | None = None
     ):
@@ -264,14 +342,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            GET_ADDRESS_ITEM_BY_GUID,
+        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_GUID,
             params=params,
-            headers=STANDART_HEADERS(self.token),
-        )
-        response.raise_for_status()
+            headers=STANDART_HEADERS(self.token),)
         return response.json()
 
+    @log_method_call()
     def get_address_item_by_cadastral_number(
         self, cadastral_number: str, address_type: int | AddressType | None = None
     ):
@@ -293,14 +369,12 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
+        response = self._make_request("GET", GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
             params=params,
-            headers=STANDART_HEADERS(self.token),
-        )
-        response.raise_for_status()
+            headers=STANDART_HEADERS(self.token),)
         return response.json()
 
+    @log_method_call()
     def get_fias_object_types(self):
         """Получение типов объектов ФИАС.
 
@@ -310,12 +384,10 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = requests.get(
-            GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def search_address_items(
         self, search_string: str, address_type: int | AddressType | None = None
     ):
@@ -341,12 +413,10 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            SEARCH_ADDRESS_ITEMS, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", SEARCH_ADDRESS_ITEMS, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def get_address_hint(
         self,
         search_string: str | None = None,
@@ -382,9 +452,7 @@ class SyncFPA:
             elif self.address_type:
                 params["address_type"] = self.address_type
 
-            response = requests.get(
-                GET_ADDRESS_HINT, params=params, headers=STANDART_HEADERS(self.token)
-            )
+            response = self._make_request("GET", GET_ADDRESS_HINT, params=params, headers=STANDART_HEADERS(self.token))
         else:
             # POST request
             payload = {"searchNonActive": search_non_active}
@@ -397,13 +465,10 @@ class SyncFPA:
             if locations_boost is not None:
                 payload["locationsBoost"] = locations_boost
 
-            response = requests.post(
-                GET_ADDRESS_HINT, json=payload, headers=STANDART_HEADERS(self.token)
-            )
-
-        response.raise_for_status()
+            response = self._make_request("POST", GET_ADDRESS_HINT, json=payload, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def search_address_item(
         self, search_string: str, address_type: int | AddressType | None = None
     ):
@@ -429,12 +494,10 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            SEARCH_ADDRESS_ITEM, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", SEARCH_ADDRESS_ITEM, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def get_location_by_ip(
         self, ip: str, address_type: int | AddressType | None = None
     ):
@@ -456,17 +519,16 @@ class SyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = requests.get(
-            GET_LOCATION_BY_IP, params=params, headers=STANDART_HEADERS(self.token)
-        )
-        response.raise_for_status()
+        response = self._make_request("GET", GET_LOCATION_BY_IP, params=params, headers=STANDART_HEADERS(self.token))
         return response.json()
 
+    @log_method_call()
     def details(self, object_id: int, address_type: int | AddressType | None = None):
         """Устаревший метод. Используйте details_by_id вместо этого."""
         print("details устарел, используйте details_by_id вместо этого")
         return self.details_by_id(object_id, address_type)
 
+    @log_method_call()
     def search(
         self,
         search_string: str,

@@ -1,8 +1,53 @@
+import json
+import logging
 from enum import IntEnum
 from functools import wraps
 import time
 import inspect
 from typing import Callable, TypeVar, ParamSpec
+
+
+class JsonFormatter(logging.Formatter):
+    """Format log records as JSON lines."""
+
+    def format(self, record):
+        log_record = {
+            "time": self.formatTime(record),
+            "level": record.levelname,
+            "msg": record.getMessage(),
+        }
+        if hasattr(record, "data") and isinstance(record.data, dict):
+            log_record.update(record.data)
+        return json.dumps(log_record, ensure_ascii=False, default=str)
+
+    def formatTime(self, record):
+        created = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(record.created))
+        msec = int(record.msecs)
+        tz = time.strftime("%z", time.localtime(record.created))
+        if tz:
+            tz = tz[:3] + ":" + tz[3:]
+        return f"{created}.{msec:03d}{tz}"
+
+
+def _safe_headers(headers):
+    """Mask sensitive header values."""
+    result = {}
+    for k, v in headers.items():
+        lk = k.lower()
+        if "token" in lk or "secret" in lk or "authorization" in lk:
+            result[k] = "[REDACTED]"
+        else:
+            result[k] = v
+    return result
+
+
+def _truncate_body(body, max_len=1000):
+    """Truncate body string for logging."""
+    s = str(body)
+    if len(s) > max_len:
+        return s[:max_len] + "..."
+    return s
+
 
 # Base URLs
 BASE_URL = "https://fias-public-service.nalog.ru/api/spas/v2.0"
@@ -73,6 +118,97 @@ class AddressType(IntEnum):
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+
+def log_method_call(level=logging.DEBUG):
+    """Log method entry, success and exceptions."""
+
+    def decorator(func):
+        is_async = inspect.iscoroutinefunction(func)
+        func_name = func.__name__
+
+        if is_async:
+
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                logger = getattr(args[0], "_logger", None) if args else None
+                if logger and logger.isEnabledFor(level):
+                    safe_kwargs = {
+                        k: v for k, v in kwargs.items() if "token" not in k.lower()
+                    }
+                    logger.log(
+                        level,
+                        "%s.%s called with args=%r kwargs=%r",
+                        type(args[0]).__name__,
+                        func_name,
+                        args[1:],
+                        safe_kwargs,
+                    )
+                try:
+                    result = await func(*args, **kwargs)
+                    if logger and logger.isEnabledFor(level):
+                        logger.log(
+                            level,
+                            "%s.%s completed successfully",
+                            type(args[0]).__name__,
+                            func_name,
+                        )
+                    return result
+                except Exception as exc:
+                    if logger and logger.isEnabledFor(level):
+                        logger.log(
+                            level,
+                            "%s.%s raised %s: %s",
+                            type(args[0]).__name__,
+                            func_name,
+                            type(exc).__name__,
+                            exc,
+                        )
+                    raise
+
+            return async_wrapper
+        else:
+
+            @wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                logger = getattr(args[0], "_logger", None) if args else None
+                if logger and logger.isEnabledFor(level):
+                    safe_kwargs = {
+                        k: v for k, v in kwargs.items() if "token" not in k.lower()
+                    }
+                    logger.log(
+                        level,
+                        "%s.%s called with args=%r kwargs=%r",
+                        type(args[0]).__name__,
+                        func_name,
+                        args[1:],
+                        safe_kwargs,
+                    )
+                try:
+                    result = func(*args, **kwargs)
+                    if logger and logger.isEnabledFor(level):
+                        logger.log(
+                            level,
+                            "%s.%s completed successfully",
+                            type(args[0]).__name__,
+                            func_name,
+                        )
+                    return result
+                except Exception as exc:
+                    if logger and logger.isEnabledFor(level):
+                        logger.log(
+                            level,
+                            "%s.%s raised %s: %s",
+                            type(args[0]).__name__,
+                            func_name,
+                            type(exc).__name__,
+                            exc,
+                        )
+                    raise
+
+            return sync_wrapper
+
+    return decorator
 
 
 def retry_on_error(

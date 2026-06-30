@@ -31,6 +31,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["fias_public_api"]
+include = ["README.md", "LICENSE"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -47,12 +48,12 @@ python_functions = ["test_*"]
 
 # Output options - более понятный вывод как в Python интерпретаторе
 addopts = [
-    "-vv",                    # Verbose output - показывает каждый тест
-    "--tb=short",             # Short traceback format (как в Python)
-    "--showlocals",            # Показывать локальные переменные при ошибках
-    "--strict-markers",        # Строгая проверка маркеров
-    "--color=yes",            # Цветной вывод
-    "--durations=10",         # Показывать 10 самых медленных тестов
+    "-vv",              # Verbose output - показывает каждый тест
+    "--tb=short",       # Short traceback format (как в Python)
+    "--showlocals",     # Показывать локальные переменные при ошибках
+    "--strict-markers", # Строгая проверка маркеров
+    "--color=yes",      # Цветной вывод
+    "--durations=10",   # Показывать 10 самых медленных тестов
 ]
 
 # Markers для категоризации тестов

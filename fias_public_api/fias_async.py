@@ -15,6 +15,10 @@
     >>> asyncio.run(main())
 """
 
+import json
+import logging
+import sys
+import time
 import httpx
 from .constants import (
     STANDART_HEADERS,
@@ -33,6 +37,10 @@ from .constants import (
     GET_ADDRESS_HINT,
     SEARCH_ADDRESS_ITEM,
     GET_LOCATION_BY_IP,
+    log_method_call,
+    JsonFormatter,
+    _safe_headers,
+    _truncate_body,
 )
 
 
@@ -51,7 +59,6 @@ async def get_token_async(url="https://fias.nalog.ru/"):
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(TOKEN_URL, params={"url": url})
-        response.raise_for_status()
         if response.status_code != 200:
             raise ValueError("Не удалось получить токен")
         return response.json()["Token"]
@@ -68,10 +75,96 @@ class AsyncFPA:
         address_type (int | AddressType): Тип адреса
     """
 
-    def __init__(self, token: str, address_type: int | AddressType):
+    def __init__(
+        self,
+        token: str,
+        address_type: int | AddressType,
+        enable_logging: bool = False,
+        log_level: int = logging.DEBUG,
+    ):
         self.token = token
         self.address_type = address_type
         self._client = None
+        self._logger = logging.getLogger(__name__)
+        self._logger.addHandler(logging.NullHandler())
+        if enable_logging:
+            handler = logging.StreamHandler(sys.stdout)
+            handler.setLevel(log_level)
+            handler.setFormatter(JsonFormatter())
+            self._logger.setLevel(log_level)
+            self._logger.addHandler(handler)
+
+    async def _log_request(self, method, url, headers, params, body):
+        if self._logger.isEnabledFor(logging.DEBUG):
+            record = self._logger.makeRecord(
+                self._logger.name,
+                logging.DEBUG,
+                "",
+                0,
+                "http request",
+                (),
+                None,
+            )
+            record.data = {
+                "method": method,
+                "url": url,
+                "headers": _safe_headers(headers),
+                "params": params,
+                "body": _truncate_body(body),
+            }
+            self._logger.handle(record)
+
+    async def _log_response(self, method, url, status, resp_headers, body, duration_ms):
+        if self._logger.isEnabledFor(logging.DEBUG):
+            record = self._logger.makeRecord(
+                self._logger.name,
+                logging.DEBUG,
+                "",
+                0,
+                "http response",
+                (),
+                None,
+            )
+            record.data = {
+                "method": method,
+                "url": url,
+                "status": status,
+                "headers": dict(resp_headers) if resp_headers else {},
+                "body": _truncate_body(body),
+                "duration": f"{duration_ms:.3f}ms",
+            }
+            self._logger.handle(record)
+
+    async def _make_request(self, method, url, **kwargs):
+        start = time.time()
+        headers = kwargs.pop("headers", {})
+        params = kwargs.pop("params", None)
+        json_payload = kwargs.pop("json", None)
+        body = json.dumps(json_payload) if json_payload else ""
+
+        await self._log_request(method.upper(), url, headers, params, body)
+
+        if method.upper() == "GET":
+            response = await self.client.get(
+                url, headers=headers, params=params, **kwargs
+            )
+        elif method.upper() == "POST":
+            response = await self.client.post(
+                url, headers=headers, json=json_payload, **kwargs
+            )
+        else:
+            raise ValueError(f"unsupported method: {method}")
+
+        duration_ms = (time.time() - start) * 1000
+        await self._log_response(
+            method.upper(),
+            url,
+            response.status_code,
+            response.headers,
+            response.text,
+            duration_ms,
+        )
+        return response
 
     async def __aenter__(self):
         """Вход в асинхронный контекстный менеджер."""
@@ -96,6 +189,7 @@ class AsyncFPA:
             return self.address_type
         return int(address_type)
 
+    @log_method_call()
     async def get_regions(self):
         """Получить список регионов.
 
@@ -105,12 +199,12 @@ class AsyncFPA:
         Raises:
             httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = await self.client.get(
-            GET_REGIONS, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET", GET_REGIONS, headers=STANDART_HEADERS(self.token)
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_address_items(
         self,
         path: str | None = None,
@@ -152,12 +246,15 @@ class AsyncFPA:
         if include_descendants is not None:
             payload["include_descendants"] = include_descendants
 
-        response = await self.client.post(
-            GET_ADDRESS_ITEMS, json=payload, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "POST",
+            GET_ADDRESS_ITEMS,
+            json=payload,
+            headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_details(self, object_id: int):
         """Получить дополнительную информацию для заданного адресного элемента.
 
@@ -170,14 +267,15 @@ class AsyncFPA:
         Raises:
             httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = await self.client.get(
+        response = await self._make_request(
+            "GET",
             GET_DETAILS,
             params={"object_id": object_id},
             headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def is_descendant(
         self,
         ancestor: int,
@@ -203,12 +301,12 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET", IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token)
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def has_descendants(
         self,
         parent: int,
@@ -234,12 +332,12 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET", HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token)
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def details_by_id(
         self, object_id: int, address_type: int | AddressType | None = None
     ):
@@ -261,12 +359,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            GET_ADDRESS_ITEM_BY_ID, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET",
+            GET_ADDRESS_ITEM_BY_ID,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def details_by_guid(
         self, object_guid: str, address_type: int | AddressType | None = None
     ):
@@ -288,14 +389,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
+        response = await self._make_request(
+            "GET",
             GET_ADDRESS_ITEM_BY_GUID,
             params=params,
             headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_address_item_by_cadastral_number(
         self, cadastral_number: str, address_type: int | AddressType | None = None
     ):
@@ -317,14 +419,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
+        response = await self._make_request(
+            "GET",
             GET_ADDRESS_ITEM_BY_CADASTRAL_NUMBER,
             params=params,
             headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_fias_object_types(self):
         """Получение типов объектов ФИАС.
 
@@ -334,12 +437,12 @@ class AsyncFPA:
         Raises:
             httpx.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        response = await self.client.get(
-            GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET", GET_FIAS_OBJECT_TYPES, headers=STANDART_HEADERS(self.token)
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def search_address_items(
         self, search_string: str, address_type: int | AddressType | None = None
     ):
@@ -365,12 +468,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            SEARCH_ADDRESS_ITEMS, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET",
+            SEARCH_ADDRESS_ITEMS,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_address_hint(
         self,
         search_string: str | None = None,
@@ -406,8 +512,11 @@ class AsyncFPA:
             elif self.address_type:
                 params["address_type"] = self.address_type
 
-            response = await self.client.get(
-                GET_ADDRESS_HINT, params=params, headers=STANDART_HEADERS(self.token)
+            response = await self._make_request(
+                "GET",
+                GET_ADDRESS_HINT,
+                params=params,
+                headers=STANDART_HEADERS(self.token),
             )
         else:
             # POST request
@@ -421,13 +530,15 @@ class AsyncFPA:
             if locations_boost is not None:
                 payload["locationsBoost"] = locations_boost
 
-            response = await self.client.post(
-                GET_ADDRESS_HINT, json=payload, headers=STANDART_HEADERS(self.token)
+            response = await self._make_request(
+                "POST",
+                GET_ADDRESS_HINT,
+                json=payload,
+                headers=STANDART_HEADERS(self.token),
             )
-
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def search_address_item(
         self, search_string: str, address_type: int | AddressType | None = None
     ):
@@ -453,12 +564,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            SEARCH_ADDRESS_ITEM, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET",
+            SEARCH_ADDRESS_ITEM,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def get_location_by_ip(
         self, ip: str, address_type: int | AddressType | None = None
     ):
@@ -480,12 +594,15 @@ class AsyncFPA:
         elif self.address_type:
             params["address_type"] = self.address_type
 
-        response = await self.client.get(
-            GET_LOCATION_BY_IP, params=params, headers=STANDART_HEADERS(self.token)
+        response = await self._make_request(
+            "GET",
+            GET_LOCATION_BY_IP,
+            params=params,
+            headers=STANDART_HEADERS(self.token),
         )
-        response.raise_for_status()
         return response.json()
 
+    @log_method_call()
     async def details(
         self, object_id: int, address_type: int | AddressType | None = None
     ):
@@ -493,6 +610,7 @@ class AsyncFPA:
         print("details устарел, используйте details_by_id вместо этого")
         return await self.details_by_id(object_id, address_type)
 
+    @log_method_call()
     async def search(
         self,
         search_string: str,
