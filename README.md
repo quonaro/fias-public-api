@@ -28,13 +28,13 @@ pip install git+https://github.com/quonaro/fias-public-api
 ### Синхронный пример
 
 ```python
-from fias_public_api import get_token_sync, SyncFPA
+from fias_public_api import get_token_sync, SyncFPA, AddressType
 
 # Получаем токен автоматически
 token = get_token_sync()
 
-# Создаем клиент
-api = SyncFPA(token)
+# Создаем клиент (address_type обязателен: 1 — административный, 2 — муниципальный)
+api = SyncFPA(token, AddressType.ADMINISTRATIVE)
 
 # Ищем адрес
 results = api.search("Москва, Красная площадь")
@@ -50,12 +50,12 @@ if results:
 
 ```python
 import asyncio
-from fias_public_api import get_token_async, AsyncFPA
+from fias_public_api import get_token_async, AsyncFPA, AddressType
 
 async def main():
     token = await get_token_async()
 
-    async with AsyncFPA(token) as api:
+    async with AsyncFPA(token, AddressType.ADMINISTRATIVE) as api:
         results = await api.search("Москва, Красная площадь")
         print(f"Найдено: {len(results)} результатов")
 
@@ -71,11 +71,11 @@ asyncio.run(main())
 ### 🔍 Поиск адресов
 
 ```python
-# Простой поиск
+# Простой поиск (используется address_type из конструктора)
 results = api.search("Москва")
 
-# Поиск с кастомным URL
-results = api.search("Санкт-Петербург", url="https://custom-fias.ru/api")
+# Поиск с переопределением address_type для конкретного вызова
+results = api.search("Санкт-Петербург", address_type=AddressType.MUNICIPALITY)
 
 # Обработка результатов
 for result in results:
@@ -98,6 +98,7 @@ for region in regions:
 from fias_public_api import AddressType
 
 object_id = 12345
+# address_type можно переопределить для конкретного вызова
 details = api.details_by_id(object_id, address_type=AddressType.MUNICIPALITY)
 ```
 
@@ -141,8 +142,8 @@ from fias_public_api import AddressType
 
 api = SyncFPA(
     token,
-    url="https://custom-fias.ru/api",
-    address_type=AddressType.ADMINISTRATIVE
+    address_type=AddressType.ADMINISTRATIVE,
+    enable_logging=True,
 )
 ```
 
@@ -184,7 +185,7 @@ except RequestException as e:
 
 ### Синхронные методы (`SyncFPA`)
 
-- `search(search_string, url)` — поиск адресов по текстовой строке
+- `search(search_string, address_type)` — поиск адресов по текстовой строке
 - `details_by_id(object_id, address_type)` — детали по ID
 - `details_by_guid(object_guid, address_type)` — детали по GUID
 - `get_regions()` — список регионов

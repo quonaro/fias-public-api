@@ -5,9 +5,9 @@
 Предоставляет простой доступ к функциям поиска адресов и получения детальной информации.
 
 Пример:
-    >>> from fias_public_api import SyncFPA, get_token_sync
+    >>> from fias_public_api import SyncFPA, get_token_sync, AddressType
     >>> token = get_token_sync()
-    >>> api = SyncFPA(token)
+    >>> api = SyncFPA(token, AddressType.ADMINISTRATIVE)
     >>> results = api.search("Москва, Красная площадь")
     >>> details = api.details(12345)
 """
@@ -69,18 +69,20 @@ class SyncFPA:
 
     Args:
         token (str): Токен аутентификации для доступа к API
-        address_type (int | AddressType): Тип адреса
+        address_type (int | AddressType): Тип адреса (1 — административный, 2 — муниципальный).
+            Используется по умолчанию для всех запросов. Может быть переопределён
+            в конкретном методе через параметр address_type.
     """
 
     def __init__(
         self,
         token: str,
-        address_type: int | AddressType | None = None,
+        address_type: int | AddressType,
         enable_logging: bool = False,
         log_level: int = logging.DEBUG,
     ):
         self.token = token
-        self.address_type = address_type
+        self.address_type = int(address_type)
         self._logger = logging.getLogger(__name__)
         self._logger.addHandler(logging.NullHandler())
         if enable_logging:
@@ -193,7 +195,8 @@ class SyncFPA:
             address_level (int, optional): Уровень адреса
             address_levels (list[int], optional): Список уровней адресов
             name_part (str, optional): Часть названия для поиска
-            address_type (int | AddressType, optional): Тип адреса
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
             include_descendants (bool, optional): Включать ли дочерние элементы
 
         Returns:
@@ -211,10 +214,7 @@ class SyncFPA:
             payload["address_levels"] = address_levels
         if name_part is not None:
             payload["name_part"] = name_part
-        if address_type is not None:
-            payload["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            payload["address_type"] = self.address_type
+        payload["address_type"] = self._get_address_type(address_type)
         if include_descendants is not None:
             payload["include_descendants"] = include_descendants
 
@@ -257,9 +257,10 @@ class SyncFPA:
         """Проверка, является ли элемент ancestor родительским элементом в иерархии для элемента descendant.
 
         Args:
-            ancestor (int): Идентификатор родительского элемента
-            descendant (int): Идентификатор дочернего элемента
-            address_type (int | AddressType, optional): Вид представления адреса
+            ancestor (int): Идентификатор предполагаемого родительского элемента
+            descendant (int): Идентификатор проверяемого дочернего элемента
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             dict: Результат проверки
@@ -267,11 +268,11 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"ancestor": ancestor, "descendant": descendant}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "ancestor": ancestor,
+            "descendant": descendant,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET", IS_DESCENDANT, params=params, headers=STANDART_HEADERS(self.token)
@@ -285,12 +286,13 @@ class SyncFPA:
         up_to_level: int,
         address_type: int | AddressType | None = None,
     ):
-        """Проверка, имеет ли элемент parent дочерние элементы до уровня up_to_level.
+        """Проверка наличия дочерних элементов у заданного элемента.
 
         Args:
             parent (int): Идентификатор родительского элемента
-            up_to_level (int): Максимальный уровень дочерних элементов
-            address_type (int | AddressType, optional): Вид представления адреса
+            up_to_level (int): Максимальный уровень иерархии для проверки
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             dict: Результат проверки
@@ -298,11 +300,11 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"parent": parent, "up_to_level": up_to_level}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "parent": parent,
+            "up_to_level": up_to_level,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET", HAS_DESCENDANTS, params=params, headers=STANDART_HEADERS(self.token)
@@ -311,25 +313,27 @@ class SyncFPA:
 
     @log_method_call()
     def details_by_id(
-        self, object_id: int, address_type: int | AddressType | None = None
+        self,
+        object_id: int,
+        address_type: int | AddressType | None = None,
     ):
-        """Получить детальную информацию об адресном объекте по его ID.
+        """Получение детальной информации об адресном элементе по его ID.
 
         Args:
-            object_id (int): ID объекта ФИАС
-            address_type (int | AddressType, optional): Тип адреса
+            object_id (int): Идентификатор адресного элемента
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
-            dict: Детальная информация об адресном объекте
+            dict: Адресный элемент с детальной информацией
 
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"object_id": object_id}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "object_id": object_id,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -341,25 +345,27 @@ class SyncFPA:
 
     @log_method_call()
     def details_by_guid(
-        self, object_guid: str, address_type: int | AddressType | None = None
+        self,
+        object_guid: str,
+        address_type: int | AddressType | None = None,
     ):
-        """Получить детальную информацию об адресном объекте по его GUID.
+        """Получение детальной информации об адресном элементе по его GUID.
 
         Args:
-            object_guid (str): GUID объекта ФИАС
-            address_type (int | AddressType, optional): Тип адреса
+            object_guid (str): GUID адресного элемента
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
-            dict: Детальная информация об адресном объекте
+            dict: Адресный элемент с детальной информацией
 
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"object_guid": object_guid}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "object_guid": object_guid,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -377,7 +383,8 @@ class SyncFPA:
 
         Args:
             cadastral_number (str): Кадастровый номер
-            address_type (int | AddressType, optional): Тип адреса
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             dict: Адресный элемент
@@ -385,11 +392,10 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"cadastral_number": cadastral_number}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "cadastral_number": cadastral_number,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -422,7 +428,8 @@ class SyncFPA:
 
         Args:
             search_string (str): Адрес строкой
-            address_type (int | AddressType, optional): Вид представления адреса
+            address_type (int | AddressType, optional): Вид представления адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             dict: Список адресных элементов
@@ -434,11 +441,10 @@ class SyncFPA:
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
 
-        params = {"search_string": search_string}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "search_string": search_string,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -461,7 +467,8 @@ class SyncFPA:
 
         Args:
             search_string (str, optional): Адрес строкой
-            address_type (int | AddressType, optional): Вид представления адреса
+            address_type (int | AddressType, optional): Вид представления адреса. Если не указан,
+                используется значение из конструктора.
             up_to_level (int, optional): Максимальный уровень поиска
             locations_boost (int, optional): Приоритет локаций
             search_non_active (bool): Искать неактивные адреса
@@ -478,11 +485,10 @@ class SyncFPA:
             if not search_string.strip():
                 raise ValueError("search_string cannot be empty")
             # GET request
-            params = {"search_string": search_string}
-            if address_type is not None:
-                params["address_type"] = self._get_address_type(address_type)
-            elif self.address_type:
-                params["address_type"] = self.address_type
+            params = {
+                "search_string": search_string,
+                "address_type": self._get_address_type(address_type),
+            }
 
             response = self._make_request(
                 "GET",
@@ -493,10 +499,7 @@ class SyncFPA:
         else:
             # POST request
             payload = {"searchNonActive": search_non_active}
-            if address_type is not None:
-                payload["addressType"] = self._get_address_type(address_type)
-            elif self.address_type:
-                payload["addressType"] = self.address_type
+            payload["addressType"] = self._get_address_type(address_type)
             if up_to_level is not None:
                 payload["upToLevel"] = up_to_level
             if locations_boost is not None:
@@ -518,7 +521,8 @@ class SyncFPA:
 
         Args:
             search_string (str): Адрес строкой
-            address_type (int | AddressType, optional): Вид представления адреса
+            address_type (int | AddressType, optional): Вид представления адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             dict: Адресный элемент
@@ -530,11 +534,10 @@ class SyncFPA:
         if not search_string.strip():
             raise ValueError("search_string cannot be empty")
 
-        params = {"search_string": search_string}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "search_string": search_string,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -552,7 +555,8 @@ class SyncFPA:
 
         Args:
             ip (str): IP адрес
-            address_type (int | AddressType, optional): Тип представления возвращаемых адресных объектов
+            address_type (int | AddressType, optional): Тип представления возвращаемых адресных объектов.
+                Если не указан, используется значение из конструктора.
 
         Returns:
             dict: Адресные объекты
@@ -560,11 +564,10 @@ class SyncFPA:
         Raises:
             requests.HTTPError: Если HTTP запрос завершился ошибкой
         """
-        params = {"ip": ip}
-        if address_type is not None:
-            params["address_type"] = self._get_address_type(address_type)
-        elif self.address_type:
-            params["address_type"] = self.address_type
+        params = {
+            "ip": ip,
+            "address_type": self._get_address_type(address_type),
+        }
 
         response = self._make_request(
             "GET",
@@ -590,7 +593,8 @@ class SyncFPA:
 
         Args:
             search_string (str): Текст для поиска (адрес, улица и т.д.)
-            address_type (int | AddressType, optional): Тип адреса
+            address_type (int | AddressType, optional): Тип адреса. Если не указан,
+                используется значение из конструктора.
 
         Returns:
             list: Список подсказок адресов, соответствующих поисковому запросу
